@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Generator</title>
+  <link rel="stylesheet" href="css/vars.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="logo">Song Generator</div>
+    <div class="user-info">
+      <span class="user-name" id="user-name"></span>
+      <button class="logout-btn" id="logout-btn">Abmelden</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-layout">
+    <!-- Left: Chat -->
+    <section class="chat-panel">
+      <div class="chat-messages" id="chat-messages">
+        <!-- Messages render here -->
+      </div>
+      <div class="typing-indicator" id="typing">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Schreib deine Song-Idee..." autocomplete="off">
+        <button id="send-btn">Senden</button>
+      </div>
+    </section>
+
+    <!-- Right: Info Panel -->
+    <aside class="info-panel">
+      <!-- Credits -->
+      <div class="panel-card credits-card">
+        <h3>Song-Guthaben</h3>
+        <div class="credits-count" id="credits-count">–</div>
+        <div class="credits-label">Songs verfügbar</div>
+      </div>
+
+      <!-- Lyrics -->
+      <div class="panel-card lyrics-card">
+        <h3>Lyrics</h3>
+        <div class="lyrics-content" id="lyrics-content">
+          <p class="placeholder">Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
+        </div>
+      </div>
+
+      <!-- Player -->
+      <div class="panel-card player-card">
+        <button class="generate-btn" id="generate-btn" disabled>Song generieren</button>
+        <div class="progress-bar" id="progress">
+          <div class="spinner"></div>
+          <span>Song wird generiert...</span>
+        </div>
+        <audio id="audio-player" controls></audio>
+      </div>
+    </aside>
+  </main>
+
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
