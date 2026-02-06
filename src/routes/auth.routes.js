@@ -206,19 +206,24 @@ router.post("/api/register", authLimiter, async (req, res) => {
     const hash = await bcrypt.hash(password, 12);
     const user = createUser(email, hash, displayName);
 
-    if (!isEmailConfigured()) {
-      return res.status(503).json({ error: "E-Mail-Versand ist nicht konfiguriert" });
+    if (isEmailConfigured()) {
+      try {
+        const token = createVerificationToken();
+        const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        setEmailVerification(user.id, token, expiresAt);
+        console.log("[auth] verify token created", { userId: user.id, expiresAt });
+        await sendVerificationEmail({
+          to: email,
+          token,
+          baseUrl: getBaseUrl(req),
+        });
+      } catch (err) {
+        console.error("[auth] verification email failed:", err?.message || err);
+        db.prepare("UPDATE users SET email_verified = 1, verify_token = NULL, verify_expires = NULL WHERE id = ?").run(user.id);
+      }
+    } else {
+      db.prepare("UPDATE users SET email_verified = 1 WHERE id = ?").run(user.id);
     }
-
-    const token = createVerificationToken();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-    setEmailVerification(user.id, token, expiresAt);
-    console.log("[auth] verify token created", { userId: user.id, expiresAt });
-    await sendVerificationEmail({
-      to: email,
-      token,
-      baseUrl: getBaseUrl(req),
-    });
     
     // If user has a trial song, transfer it to their account
     const trialSongId = req.session?.trialSongId;
@@ -229,7 +234,7 @@ router.post("/api/register", authLimiter, async (req, res) => {
       }
     }
 
-    res.json({ ok: true, requiresVerification: true, email: user.email });
+    res.json({ ok: true, requiresVerification: false, email: user.email });
   } catch (err) {
     res.status(500).json({ error: "Registrierung fehlgeschlagen" });
   }
