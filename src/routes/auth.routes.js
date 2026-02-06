@@ -342,6 +342,7 @@ router.post("/api/logout", (req, res) => {
 router.get("/api/me", requireAuth, (req, res) => {
   const user = findUserById(req.session.userId);
   if (!user) return res.status(401).json({ error: "Nutzer nicht gefunden" });
+  const resolvedProvider = user.provider || (user.google_id ? "google" : "local");
   res.json({
     id: user.id,
     email: user.email,
@@ -349,7 +350,7 @@ router.get("/api/me", requireAuth, (req, res) => {
     songCredits: user.song_credits,
     isAdmin: !!user.is_admin,
     created_at: user.created_at,
-    provider: user.provider || "local",
+    provider: resolvedProvider,
   });
 });
 
@@ -407,7 +408,8 @@ router.delete("/api/me", requireAuth, async (req, res) => {
   try {
     const user = findUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Nutzer nicht gefunden" });
-    const isLocalUser = (user.provider || "local") === "local";
+    const resolvedProvider = user.provider || (user.google_id ? "google" : "local");
+    const isLocalUser = resolvedProvider === "local";
     if (isLocalUser) {
       if (!password) {
         return res.status(400).json({ error: "Passwort erforderlich" });
