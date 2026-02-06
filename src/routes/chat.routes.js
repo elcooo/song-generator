@@ -12,15 +12,16 @@ const processingFor = new Set();
 
 router.post("/api/wizard", requireAuth, wizardLimiter, async (req, res) => {
   const userId = req.session.userId;
-  const { occasion, recipient, name, details, style } = req.body;
+  const { language, occasion, recipient, name, details, style } = req.body;
 
+  const languageResult = requireText(language, LIMITS.language, "Bitte fülle alle Pflichtfelder aus");
   const occasionResult = requireText(occasion, LIMITS.occasion, "Bitte fülle alle Pflichtfelder aus");
   const recipientResult = requireText(recipient, LIMITS.recipient, "Bitte fülle alle Pflichtfelder aus");
   const nameResult = requireText(name, LIMITS.name, "Bitte fülle alle Pflichtfelder aus");
   const styleResult = requireText(style, LIMITS.style, "Bitte fülle alle Pflichtfelder aus");
   const detailsResult = optionalText(details, LIMITS.details);
 
-  if (!occasionResult.ok || !recipientResult.ok || !nameResult.ok || !styleResult.ok) {
+  if (!languageResult.ok || !occasionResult.ok || !recipientResult.ok || !nameResult.ok || !styleResult.ok) {
     return res.status(400).json({ error: "Bitte fülle alle Pflichtfelder aus" });
   }
   if (!detailsResult.ok) {
@@ -34,6 +35,7 @@ router.post("/api/wizard", requireAuth, wizardLimiter, async (req, res) => {
   processingFor.add(userId);
   try {
     const result = await generateFromWizard(userId, {
+      language: languageResult.value,
       occasion: occasionResult.value,
       recipient: recipientResult.value,
       name: nameResult.value,
@@ -115,15 +117,16 @@ router.post("/api/lyrics/edit/trial", trialLimiter, async (req, res) => {
 
 // Trial mode - wizard without authentication
 router.post("/api/wizard/trial", trialLimiter, async (req, res) => {
-  const { occasion, recipient, name, details, style } = req.body;
+  const { language, occasion, recipient, name, details, style } = req.body;
 
+  const languageResult = requireText(language, LIMITS.language, "Bitte fülle alle Pflichtfelder aus");
   const occasionResult = requireText(occasion, LIMITS.occasion, "Bitte fülle alle Pflichtfelder aus");
   const recipientResult = requireText(recipient, LIMITS.recipient, "Bitte fülle alle Pflichtfelder aus");
   const nameResult = requireText(name, LIMITS.name, "Bitte fülle alle Pflichtfelder aus");
   const styleResult = requireText(style, LIMITS.style, "Bitte fülle alle Pflichtfelder aus");
   const detailsResult = optionalText(details, LIMITS.details);
 
-  if (!occasionResult.ok || !recipientResult.ok || !nameResult.ok || !styleResult.ok) {
+  if (!languageResult.ok || !occasionResult.ok || !recipientResult.ok || !nameResult.ok || !styleResult.ok) {
     return res.status(400).json({ error: "Bitte fülle alle Pflichtfelder aus" });
   }
   if (!detailsResult.ok) {
@@ -139,6 +142,7 @@ router.post("/api/wizard/trial", trialLimiter, async (req, res) => {
   processingFor.add(trialKey);
   try {
     const result = await generateFromWizard(0, {
+      language: languageResult.value,
       occasion: occasionResult.value,
       recipient: recipientResult.value,
       name: nameResult.value,

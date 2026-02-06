@@ -6,6 +6,7 @@ let songDetailReturnView = "home";
 
 // ===== Wizard State =====
 const WIZARD_STEPS = [
+  { key: "language", label: "Sprache" },
   { key: "occasion", label: "Anlass" },
   { key: "recipient", label: "Für wen" },
   { key: "name", label: "Name" },
@@ -13,7 +14,7 @@ const WIZARD_STEPS = [
   { key: "style", label: "Stil" },
 ];
 
-let wizardData = { occasion: "", recipient: "", name: "", details: "", style: "" };
+let wizardData = { language: "", occasion: "", recipient: "", name: "", details: "", style: "" };
 let currentStep = 0;
 let exampleInterval = null;
 let currentExampleIndex = 0;
@@ -878,7 +879,8 @@ async function retrySong(songId) {
 // ===== Wizard =====
 function updateStepSelections() {
   // Update the step-selection elements to show user's choices
-  const selectionMap = {
+    const selectionMap = {
+    language: wizardData.language,
     occasion: wizardData.occasion,
     recipient: wizardData.recipient,
     name: wizardData.name,
@@ -936,8 +938,9 @@ function goToStep(step) {
   // Enable/disable next based on current step value
   updateNextButton();
 
-  // Handle rotating examples for details step
-  if (step === 3) {
+    // Handle rotating examples for details step
+  const stepKey = WIZARD_STEPS[step]?.key;
+  if (stepKey === "details") {
     // Details step - start rotating examples if no details entered
     if (!wizardData.details) {
       startExamplesRotation();
@@ -1123,7 +1126,7 @@ document.querySelectorAll(".custom-input").forEach(input => {
   });
 });
 
-// Name input (step 2)
+// Name input
 const nameInput = document.getElementById("name-input");
 if (nameInput) {
   nameInput.addEventListener("input", () => {
@@ -1139,7 +1142,7 @@ if (nameInput) {
   });
 }
 
-// Details textarea (step 3 - optional)
+// Details textarea (optional)
 const detailsInput = document.getElementById("details-input");
 if (detailsInput) {
   detailsInput.addEventListener("input", () => {
@@ -1168,7 +1171,7 @@ nextBtn.addEventListener("click", handleNextStep);
 backBtn.addEventListener("click", handleBackStep);
 
 resetWizardBtn.addEventListener("click", () => {
-  if (wizardData.occasion || wizardData.recipient || wizardData.name || wizardData.details || wizardData.style) {
+  if (wizardData.language || wizardData.occasion || wizardData.recipient || wizardData.name || wizardData.details || wizardData.style) {
     if (!confirm("Möchtest du wirklich neu starten? Alle Eingaben werden gelöscht.")) {
       return;
     }

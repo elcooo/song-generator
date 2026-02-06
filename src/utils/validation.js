@@ -3,6 +3,7 @@ export const LIMITS = {
   passwordMin: 8,
   passwordMax: 128,
   displayName: 50,
+  language: 40,
   occasion: 80,
   recipient: 80,
   name: 80,

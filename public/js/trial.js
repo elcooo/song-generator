@@ -12,6 +12,7 @@ let generationStartedAt = null;
 
 // Wizard state
 const WIZARD_STEPS = [
+  { key: "language", label: "Sprache" },
   { key: "occasion", label: "Anlass" },
   { key: "recipient", label: "Für wen" },
   { key: "name", label: "Name" },
@@ -19,7 +20,7 @@ const WIZARD_STEPS = [
   { key: "style", label: "Stil" },
 ];
 
-let wizardData = { occasion: "", recipient: "", name: "", details: "", style: "" };
+let wizardData = { language: "", occasion: "", recipient: "", name: "", details: "", style: "" };
 let currentStep = 0;
 
 // ===== Details Examples (rotating) =====
@@ -180,7 +181,8 @@ function suggestRecipient(occasion, suggestedValue) {
 
 // ===== Update Step Selections =====
 function updateStepSelections() {
-  const selectionMap = {
+    const selectionMap = {
+    language: wizardData.language,
     occasion: wizardData.occasion,
     recipient: wizardData.recipient,
     name: wizardData.name,
@@ -230,8 +232,10 @@ function goToStep(step) {
   stepIndicator.textContent = `Schritt ${step + 1} von ${WIZARD_STEPS.length}`;
   updateNextButton();
 
-  // Handle rotating examples for details step
-  if (step === 3) {
+    // Handle rotating examples for details step
+  const stepKey = WIZARD_STEPS[step]?.key;
+  if (stepKey === "details") {
+    // Details step - start rotating examples if no details entered
     if (!wizardData.details) {
       startExamplesRotation();
     }

@@ -164,42 +164,64 @@
         </button>
       </div>
 
-      <div class="wizard-progress" id="wizard-progress">
+                  <div class="wizard-progress" id="wizard-progress">
         <div class="progress-step active" data-step="0">
           <span class="step-num">1</span>
-          <span class="step-label">Anlass</span>
-          <span class="step-selection" data-selection="occasion"></span>
+          <span class="step-label">Sprache</span>
+          <span class="step-selection" data-selection="language"></span>
         </div>
         <div class="progress-step" data-step="1">
           <span class="step-num">2</span>
-          <span class="step-label">Für wen</span>
-          <span class="step-selection" data-selection="recipient"></span>
+          <span class="step-label">Anlass</span>
+          <span class="step-selection" data-selection="occasion"></span>
         </div>
         <div class="progress-step" data-step="2">
           <span class="step-num">3</span>
-          <span class="step-label">Name</span>
-          <span class="step-selection" data-selection="name"></span>
+          <span class="step-label">Für wen</span>
+          <span class="step-selection" data-selection="recipient"></span>
         </div>
         <div class="progress-step" data-step="3">
           <span class="step-num">4</span>
-          <span class="step-label">Details</span>
-          <span class="step-selection" data-selection="details"></span>
+          <span class="step-label">Name</span>
+          <span class="step-selection" data-selection="name"></span>
         </div>
         <div class="progress-step" data-step="4">
           <span class="step-num">5</span>
+          <span class="step-label">Details</span>
+          <span class="step-selection" data-selection="details"></span>
+        </div>
+        <div class="progress-step" data-step="5">
+          <span class="step-num">6</span>
           <span class="step-label">Stil</span>
           <span class="step-selection" data-selection="style"></span>
         </div>
       </div>
 
-      <div class="wizard-steps" id="wizard-steps">
-        <!-- Step 0: Anlass -->
+            <div class="wizard-steps" id="wizard-steps">
+        <!-- Step 0: Sprache -->
         <div class="wizard-step active" data-step="0">
+          <h3>Welche Sprache soll der Song haben?</h3>
+          <p class="step-desc">Wähle die Sprache für deinen Songtext.</p>
+          <div class="option-cards">
+            <button class="option-card" data-value="Deutsch">Deutsch</button>
+            <button class="option-card" data-value="Englisch">Englisch</button>
+            <button class="option-card" data-value="Spanisch">Spanisch</button>
+            <button class="option-card" data-value="Französisch">Französisch</button>
+            <button class="option-card" data-value="Italienisch">Italienisch</button>
+            <button class="option-card" data-value="Türkisch">Türkisch</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigene Sprache eingeben..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 1: Anlass -->
+        <div class="wizard-step" data-step="1">
           <h3>Wähle den Anlass</h3>
           <p class="step-desc">Für welchen Anlass soll der Song sein?</p>
           <div class="option-cards">
             <button class="option-card" data-value="Geburtstag" data-suggest-recipient="">🎂 Geburtstag</button>
-            <button class="option-card" data-value="Hochzeit" data-suggest-recipient="Brautpaar">💒 Hochzeit</button>
+            <button class="option-card" data-value="Hochzeit" data-suggest-recipient="Brautpaar">💍 Hochzeit</button>
             <button class="option-card" data-value="Jubiläum" data-suggest-recipient="">🎉 Jubiläum</button>
             <button class="option-card" data-value="Valentinstag" data-suggest-recipient="Partner/in">❤️ Valentinstag</button>
             <button class="option-card" data-value="Weihnachten" data-suggest-recipient="Familie">🎄 Weihnachten</button>
@@ -212,8 +234,8 @@
           </div>
         </div>
 
-        <!-- Step 1: Für wen -->
-        <div class="wizard-step" data-step="1">
+        <!-- Step 2: Für wen -->
+        <div class="wizard-step" data-step="2">
           <h3>Für wen ist der Song?</h3>
           <p class="step-desc">Wer soll mit dem Song überrascht werden?</p>
           <div class="option-cards" id="recipient-cards">
@@ -226,7 +248,7 @@
             <button class="option-card" data-value="Geschwister">👧👦 Geschwister</button>
             <button class="option-card" data-value="Großeltern">👴👵 Großeltern</button>
             <button class="option-card" data-value="Familie">👨‍👩‍👧‍👦 Familie</button>
-            <button class="option-card" data-value="Brautpaar">💒 Brautpaar</button>
+            <button class="option-card" data-value="Brautpaar">💍 Brautpaar</button>
             <button class="option-card" data-value="Kollege/in">💼 Kollege/in</button>
             <button class="option-card" data-value="Gruppe">👥 Gruppe</button>
           </div>
@@ -235,8 +257,8 @@
           </div>
         </div>
 
-        <!-- Step 2: Name -->
-        <div class="wizard-step" data-step="2">
+        <!-- Step 3: Name -->
+        <div class="wizard-step" data-step="3">
           <h3>Wie heißt die Person?</h3>
           <p class="step-desc">Der Name wird im Song verwendet.</p>
           <div class="name-input-area">
@@ -244,8 +266,8 @@
           </div>
         </div>
 
-        <!-- Step 3: Details -->
-        <div class="wizard-step" data-step="3">
+        <!-- Step 4: Details -->
+        <div class="wizard-step" data-step="4">
           <h3>Persönliche Details</h3>
           <p class="step-desc">Erzähle etwas über die Person oder den Anlass. Je mehr Details, desto persönlicher der Song. (Optional)</p>
           <div class="details-input-area">
@@ -257,8 +279,8 @@
           </div>
         </div>
 
-        <!-- Step 4: Stil -->
-        <div class="wizard-step" data-step="4">
+        <!-- Step 5: Stil -->
+        <div class="wizard-step" data-step="5">
           <h3>Wähle den Musikstil</h3>
           <p class="step-desc">Welcher Stil passt am besten?</p>
           <div class="option-cards">
@@ -282,7 +304,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Zurück
         </button>
-        <span class="wizard-step-indicator" id="wizard-step-indicator">Schritt 1 von 5</span>
+        <span class="wizard-step-indicator" id="wizard-step-indicator">Schritt 1 von 6</span>
         <button type="button" class="wizard-next-btn" id="wizard-next-btn" disabled>
           Weiter
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

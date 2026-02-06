@@ -8,9 +8,8 @@ AUFGABE:
 Du erhältst strukturierte Informationen über einen Song (Anlass, Empfänger, Name, persönliche Details, Musikstil) und schreibst daraus vollständige, produktionsreife Lyrics.
 
 SPRACHE:
-- Schreibe die Lyrics in der Sprache, die zum Musikstil passt.
-- Englisch ist Standard für die meisten Stile (Pop, Rock, Blues, R&B, Soul, Country, Rap, Hip-Hop, Jazz, Reggae, Electronic, etc.)
-- Deutsch nur wenn der Stil es nahelegt (Schlager, Volksmusik, Deutschrap) oder der Nutzer explizit Deutsch wünscht.
+- Schreibe die Lyrics vollständig in der vom Nutzer gewählten Sprache, falls angegeben.
+- Wenn keine Sprache angegeben ist, nutze die Sprache der vorhandenen Lyrics oder die Sprache, die zum Musikstil passt.
 - Persönliche Details und Namen immer einbauen, egal welche Sprache.
 
 FORMAT UND STRUKTUR:
@@ -67,8 +66,9 @@ Just keep fallin'...
  * Generate lyrics from wizard data (single API call, no conversation).
  * Returns { type: 'generate', lyrics, style, content }
  */
-export async function generateFromWizard(userId, { occasion, recipient, name, details, style }) {
-  const userPrompt = `Anlass: ${occasion}
+export async function generateFromWizard(userId, { language, occasion, recipient, name, details, style }) {
+  const userPrompt = `Sprache: ${language}
+Anlass: ${occasion}
 Für wen: ${recipient}
 Name: ${name}
 Persönliche Details: ${details || "Keine weiteren Details angegeben."}
