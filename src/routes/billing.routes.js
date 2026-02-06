@@ -25,15 +25,47 @@ function getBaseUrl(req) {
   return process.env.PUBLIC_BASE_URL || process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
 }
 
-router.get("/api/stripe/config", (req, res) => {
-  res.json({
-    enabled: !!stripe && !!PRICE_ID,
-    priceLabel: PRICE_LABEL,
-    credits: Number.isFinite(CREDITS_PER_PURCHASE) ? CREDITS_PER_PURCHASE : 0,
-    currency: CURRENCY,
-    unitAmount: Number.isFinite(UNIT_AMOUNT) ? UNIT_AMOUNT : 0,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
-  });
+router.get("/api/stripe/config", async (req, res) => {
+  const enabled = !!stripe && !!PRICE_ID;
+  const credits = Number.isFinite(CREDITS_PER_PURCHASE) ? CREDITS_PER_PURCHASE : 0;
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY || "";
+
+  if (!enabled) {
+    return res.json({
+      enabled,
+      priceLabel: PRICE_LABEL,
+      credits,
+      currency: CURRENCY,
+      unitAmount: Number.isFinite(UNIT_AMOUNT) ? UNIT_AMOUNT : 0,
+      publishableKey,
+    });
+  }
+
+  try {
+    const price = await stripe.prices.retrieve(PRICE_ID);
+    const currency = price?.currency || CURRENCY;
+    const unitAmount = price?.unit_amount ?? UNIT_AMOUNT;
+    const productName = typeof price?.product === "string" ? null : price?.product?.name;
+
+    return res.json({
+      enabled,
+      priceLabel: productName || PRICE_LABEL,
+      credits,
+      currency,
+      unitAmount: Number.isFinite(unitAmount) ? unitAmount : 0,
+      publishableKey,
+    });
+  } catch (err) {
+    console.error("Stripe price fetch error:", err?.message || err);
+    return res.json({
+      enabled,
+      priceLabel: PRICE_LABEL,
+      credits,
+      currency: CURRENCY,
+      unitAmount: Number.isFinite(UNIT_AMOUNT) ? UNIT_AMOUNT : 0,
+      publishableKey,
+    });
+  }
 });
 
 router.post("/api/stripe/create-checkout-session", requireAuth, async (req, res) => {
