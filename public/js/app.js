@@ -17,7 +17,7 @@ let wizardData = { occasion: "", recipient: "", name: "", details: "", style: ""
 let currentStep = 0;
 let exampleInterval = null;
 let currentExampleIndex = 0;
-const GENERATION_ESTIMATE_SEC = 120;
+const GENERATION_ESTIMATE_SEC = 250;
 let generationTimer = null;
 let generationStartedAt = null;
 let lastProgressMessage = "Song wird generiert...";
@@ -26,6 +26,7 @@ const songListProgressStartTimes = new Map();
 const songListProgressPercents = new Map();
 let songListProgressTimer = null;
 let activeGenerationSongId = null;
+let generationStatusPollTimer = null;
 
 // ===== Details Examples (rotating) =====
 const DETAILS_EXAMPLES = [
@@ -266,6 +267,7 @@ function syncCreateGenerationState(songs) {
     activeGenerationSongId = null;
     if (progressBar) progressBar.style.display = "none";
     stopGenerationTimer();
+    stopGenerationStatusPoll();
     return;
   }
 
@@ -274,6 +276,7 @@ function syncCreateGenerationState(songs) {
   lastProgressMessage = "Song wird generiert...";
   lastProgressPercent = songListProgressPercents.get(activeGenerationSongId) || 0;
   startGenerationTimer(Number(active.created_at));
+  startGenerationStatusPoll();
 }
 
 async function refreshCreateGenerationState() {
@@ -285,6 +288,95 @@ async function refreshCreateGenerationState() {
     syncCreateGenerationState(songs);
   } catch {
     // Ignore refresh errors
+  }
+}
+
+async function checkGenerationStatus() {
+  if (!activeGenerationSongId) {
+    stopGenerationStatusPoll();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/songs/${activeGenerationSongId}`);
+    if (!res.ok) return;
+    const song = await res.json();
+
+    if (song.status === "completed" && song.file_path) {
+      applySongCompletion(song);
+    } else if (song.status === "failed") {
+      applySongFailure(song);
+    }
+  } catch {
+    // Ignore polling errors
+  }
+}
+
+function startGenerationStatusPoll() {
+  if (generationStatusPollTimer) return;
+  generationStatusPollTimer = setInterval(checkGenerationStatus, 10000);
+}
+
+function stopGenerationStatusPoll() {
+  if (generationStatusPollTimer) {
+    clearInterval(generationStatusPollTimer);
+  }
+  generationStatusPollTimer = null;
+}
+
+function applySongCompletion(song) {
+  const songId = Number(song.id);
+  if (Number.isFinite(songId) && (activeGenerationSongId === null || activeGenerationSongId === songId)) {
+    if (progressFill) progressFill.style.width = "100%";
+    if (progressPercent) progressPercent.textContent = "100%";
+    if (progressText) progressText.textContent = "Song fertig!";
+    progressBar.style.display = "none";
+    stopGenerationTimer();
+    stopGenerationStatusPoll();
+  }
+
+  if (song.file_path) {
+    audioPlayer.src = "/" + song.file_path;
+  }
+
+  if (songSuccessBox) {
+    songSuccessBox.style.display = "block";
+    setupCustomAudioPlayer();
+  }
+
+  pendingLyrics = null;
+  pendingStyle = null;
+
+  if (Number.isFinite(songId)) {
+    songListProgressStartTimes.delete(songId);
+    songListProgressPercents.delete(songId);
+    updateSongListProgressCards();
+    if (activeGenerationSongId === songId) {
+      activeGenerationSongId = null;
+    }
+  }
+
+  if (homePage.style.display !== "none") loadSongs();
+}
+
+function applySongFailure(song) {
+  const songId = Number(song.id);
+  if (Number.isFinite(songId) && (activeGenerationSongId === null || activeGenerationSongId === songId)) {
+    progressBar.style.display = "none";
+    generateBtn.disabled = false;
+    stopGenerationTimer();
+    stopGenerationStatusPoll();
+  }
+
+  showWizardError("Song-Generierung fehlgeschlagen: " + (song.error_message || "Unbekannter Fehler"));
+
+  if (Number.isFinite(songId)) {
+    songListProgressStartTimes.delete(songId);
+    songListProgressPercents.delete(songId);
+    updateSongListProgressCards();
+    if (activeGenerationSongId === songId) {
+      activeGenerationSongId = null;
+    }
   }
 }
 
@@ -1227,6 +1319,7 @@ generateBtn.addEventListener("click", async () => {
         songListProgressStartTimes.set(activeGenerationSongId, Date.now());
       }
     }
+    startGenerationStatusPoll();
   } catch {
     progressBar.style.display = "none";
     generateBtn.disabled = false;
@@ -1243,43 +1336,10 @@ function setupSSE() {
     const data = JSON.parse(e.data);
     const songId = Number(data.songId);
 
-    if (data.status === "completed") {
-      if (!activeGenerationSongId || activeGenerationSongId === songId) {
-        progressBar.style.display = "none";
-        stopGenerationTimer();
-      }
-      if (data.filePath) {
-        audioPlayer.src = "/" + data.filePath;
-      }
-      
-      // Show custom player with success animation
-      if (songSuccessBox) {
-        songSuccessBox.style.display = "block";
-        setupCustomAudioPlayer();
-      }
-      
-      pendingLyrics = null;
-      pendingStyle = null;
-      // Refresh songs list if on home
-      if (homePage.style.display !== "none") loadSongs();
-    }
-
-    if (data.status === "failed") {
-      if (!activeGenerationSongId || activeGenerationSongId === songId) {
-        progressBar.style.display = "none";
-        generateBtn.disabled = false;
-        stopGenerationTimer();
-      }
-      showWizardError("Song-Generierung fehlgeschlagen: " + (data.error || "Unbekannter Fehler"));
-    }
-
-    if (Number.isFinite(songId) && (data.status === "completed" || data.status === "failed")) {
-      songListProgressStartTimes.delete(songId);
-      songListProgressPercents.delete(songId);
-      updateSongListProgressCards();
-      if (activeGenerationSongId === songId) {
-        activeGenerationSongId = null;
-      }
+    if (data.status === "completed" && data.filePath) {
+      applySongCompletion({ id: songId, file_path: data.filePath, lyrics: pendingLyrics });
+    } else if (data.status === "failed") {
+      applySongFailure({ id: songId, error_message: data.error });
     }
   });
 

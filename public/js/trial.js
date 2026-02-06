@@ -6,7 +6,7 @@ let pendingStyle = null;
 let hasGeneratedSong = false;
 let exampleInterval = null;
 let currentExampleIndex = 0;
-const GENERATION_ESTIMATE_SEC = 120;
+const GENERATION_ESTIMATE_SEC = 250;
 let generationTimer = null;
 let generationStartedAt = null;
 
