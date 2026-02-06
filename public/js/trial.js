@@ -48,6 +48,15 @@ const audioProgressBar = document.getElementById("audio-progress-bar");
 const audioProgressFill = document.getElementById("audio-progress-fill");
 const audioCurrentTime = document.getElementById("audio-current-time");
 const audioDuration = document.getElementById("audio-duration");
+const lyricsActions = document.getElementById("lyrics-actions");
+const editLyricsBtn = document.getElementById("edit-lyrics-btn");
+const saveLyricsBtn = document.getElementById("save-lyrics-btn");
+const cancelLyricsBtn = document.getElementById("cancel-lyrics-btn");
+const lyricsEditor = document.getElementById("lyrics-editor");
+const lyricsAiBox = document.getElementById("lyrics-ai-box");
+const lyricsAiInput = document.getElementById("lyrics-ai-input");
+const lyricsAiBtn = document.getElementById("lyrics-ai-btn");
+const lyricsAiStatus = document.getElementById("lyrics-ai-status");
 let audioPlayerInitialized = false;
 
 // Wizard DOM
@@ -196,6 +205,7 @@ function goToStep(step) {
     pendingLyrics = null;
     pendingStyle = null;
     generateBtn.disabled = true;
+    lyricsContent.classList.remove("has-lyrics");
     lyricsContent.innerHTML = `<div class="lyrics-placeholder">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 18V5l12-2v13"/>
@@ -204,6 +214,14 @@ function goToStep(step) {
       </svg>
       <p>Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
     </div>`;
+    if (lyricsActions) lyricsActions.style.display = "none";
+    if (lyricsAiBox) lyricsAiBox.style.display = "none";
+    if (lyricsAiStatus) {
+      lyricsAiStatus.textContent = "";
+      lyricsAiStatus.className = "lyrics-ai-status";
+    }
+    if (lyricsAiInput) lyricsAiInput.value = "";
+    exitEditMode();
     audioPlayer.style.display = "none";
     progressBar.style.display = "none";
   }
@@ -298,12 +316,98 @@ function displayLyrics(text) {
   lyricsContent.classList.remove("has-lyrics");
   
   lyricsContent.innerHTML = formatted;
+  if (lyricsActions) lyricsActions.style.display = "flex";
+  if (lyricsAiBox) lyricsAiBox.style.display = "flex";
+  exitEditMode();
 
   requestAnimationFrame(() => {
     lyricsContent.classList.add("has-lyrics");
   });
 
   generateBtn.disabled = false;
+}
+
+// ===== Lyrics Editing =====
+function enterEditMode() {
+  if (!pendingLyrics || !lyricsEditor || !lyricsContent) return;
+  lyricsEditor.value = pendingLyrics;
+  lyricsContent.style.display = "none";
+  lyricsEditor.style.display = "block";
+  if (editLyricsBtn) editLyricsBtn.style.display = "none";
+  if (saveLyricsBtn) saveLyricsBtn.style.display = "inline-flex";
+  if (cancelLyricsBtn) cancelLyricsBtn.style.display = "inline-flex";
+  lyricsEditor.focus();
+}
+
+function exitEditMode() {
+  if (!lyricsEditor || !lyricsContent) return;
+  lyricsEditor.style.display = "none";
+  lyricsContent.style.display = "block";
+  if (editLyricsBtn) editLyricsBtn.style.display = "inline-flex";
+  if (saveLyricsBtn) saveLyricsBtn.style.display = "none";
+  if (cancelLyricsBtn) cancelLyricsBtn.style.display = "none";
+}
+
+function saveManualEdits() {
+  if (!lyricsEditor) return;
+  const edited = lyricsEditor.value.trim();
+  if (edited) {
+    displayLyrics(edited);
+  } else {
+    exitEditMode();
+  }
+}
+
+if (editLyricsBtn) editLyricsBtn.addEventListener("click", enterEditMode);
+if (cancelLyricsBtn) cancelLyricsBtn.addEventListener("click", () => { exitEditMode(); });
+if (saveLyricsBtn) saveLyricsBtn.addEventListener("click", saveManualEdits);
+
+// AI lyrics editing
+if (lyricsAiBtn) {
+  lyricsAiBtn.addEventListener("click", requestAiEdit);
+}
+if (lyricsAiInput) {
+  lyricsAiInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") requestAiEdit();
+  });
+}
+
+async function requestAiEdit() {
+  if (!lyricsAiInput || !lyricsAiBtn || !lyricsAiStatus) return;
+  const prompt = lyricsAiInput.value.trim();
+  if (!prompt || !pendingLyrics) return;
+
+  lyricsAiBtn.disabled = true;
+  lyricsAiInput.disabled = true;
+  lyricsAiStatus.textContent = "AI bearbeitet Lyrics...";
+  lyricsAiStatus.className = "lyrics-ai-status loading";
+
+  try {
+    const res = await fetch("/api/lyrics/edit/trial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lyrics: pendingLyrics, prompt, style: pendingStyle }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      lyricsAiStatus.textContent = data.error || "Bearbeitung fehlgeschlagen";
+      lyricsAiStatus.className = "lyrics-ai-status error";
+      return;
+    }
+
+    displayLyrics(data.lyrics);
+    lyricsAiInput.value = "";
+    lyricsAiStatus.textContent = "Lyrics aktualisiert!";
+    lyricsAiStatus.className = "lyrics-ai-status success";
+    setTimeout(() => { lyricsAiStatus.textContent = ""; }, 3000);
+  } catch {
+    lyricsAiStatus.textContent = "Verbindungsfehler";
+    lyricsAiStatus.className = "lyrics-ai-status error";
+  } finally {
+    lyricsAiBtn.disabled = false;
+    lyricsAiInput.disabled = false;
+  }
 }
 
 // Option card clicks — auto-advance

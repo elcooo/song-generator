@@ -171,8 +171,13 @@
     <!-- Right: Info Panel -->
     <aside class="info-panel">
       <div class="panel-card lyrics-card">
-        <div class="panel-header">
+        <div class="lyrics-header">
           <h3>Lyrics</h3>
+          <div class="lyrics-actions" id="lyrics-actions" style="display:none;">
+            <button type="button" class="lyrics-action-btn" id="edit-lyrics-btn" title="Lyrics bearbeiten">&#9998;</button>
+            <button type="button" class="lyrics-action-btn lyrics-save-btn" id="save-lyrics-btn" title="Speichern" style="display:none;">&#10003;</button>
+            <button type="button" class="lyrics-action-btn lyrics-cancel-btn" id="cancel-lyrics-btn" title="Abbrechen" style="display:none;">&#10005;</button>
+          </div>
         </div>
         <div class="lyrics-content" id="trial-lyrics-content" role="region" aria-label="Songtext">
           <div class="lyrics-placeholder">
@@ -183,6 +188,14 @@
             </svg>
             <p>Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
           </div>
+        </div>
+        <textarea class="lyrics-editor" id="lyrics-editor" style="display:none;" spellcheck="false"></textarea>
+        <div class="lyrics-ai-box" id="lyrics-ai-box" style="display:none;">
+          <div class="lyrics-ai-input-row">
+            <input type="text" class="lyrics-ai-input" id="lyrics-ai-input" placeholder="z.B. Mach den Chorus emotionaler..." maxlength="500">
+            <button type="button" class="lyrics-ai-btn" id="lyrics-ai-btn">AI</button>
+          </div>
+          <div class="lyrics-ai-status" id="lyrics-ai-status"></div>
         </div>
       </div>
 

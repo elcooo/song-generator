@@ -81,6 +81,38 @@ router.post("/api/lyrics/edit", requireAuth, wizardLimiter, async (req, res) => 
   }
 });
 
+// Trial mode - edit lyrics without authentication
+router.post("/api/lyrics/edit/trial", trialLimiter, async (req, res) => {
+  const { lyrics, prompt, style } = req.body;
+
+  if (!lyrics || !prompt) {
+    return res.status(400).json({ error: "Lyrics und Anweisung erforderlich" });
+  }
+  if (lyrics.length > 8000) {
+    return res.status(400).json({ error: "Lyrics sind zu lang" });
+  }
+  if (prompt.length > 500) {
+    return res.status(400).json({ error: "Anweisung ist zu lang (max. 500 Zeichen)" });
+  }
+
+  const trialKey = "trial_" + req.sessionID;
+
+  if (processingFor.has(trialKey)) {
+    return res.status(429).json({ error: "Bitte warte auf die vorherige Antwort" });
+  }
+
+  processingFor.add(trialKey);
+  try {
+    const result = await editLyrics(lyrics, prompt, style);
+    res.json(result);
+  } catch (err) {
+    console.error("Trial lyrics edit error:", err?.message || err);
+    res.status(500).json({ error: "Lyrics-Bearbeitung fehlgeschlagen" });
+  } finally {
+    processingFor.delete(trialKey);
+  }
+});
+
 // Trial mode - wizard without authentication
 router.post("/api/wizard/trial", trialLimiter, async (req, res) => {
   const { occasion, recipient, name, details, style } = req.body;
