@@ -7,7 +7,10 @@ import {
   findUserByEmail,
   findUserByGoogleId,
   findUserById,
+  findUserByVerificationToken,
   linkGoogleToUser,
+  markEmailVerified,
+  setEmailVerification,
   updateUserDisplayName,
   updateUserPassword,
   deleteUser,
@@ -17,6 +20,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { authLimiter } from "../middleware/rateLimiters.js";
 import { LIMITS, normalizeEmail, isValidEmail, optionalText, getPasswordError } from "../utils/validation.js";
 import db from "../db.js";
+import { createVerificationToken, isEmailConfigured, sendVerificationEmail } from "../email.js";
 
 const router = Router();
 
@@ -44,6 +48,10 @@ function normalizeNextUrl(nextUrl) {
   if (typeof nextUrl !== "string") return "/";
   if (!nextUrl.startsWith("/") || nextUrl.startsWith("//")) return "/";
   return nextUrl;
+}
+
+function getBaseUrl(req) {
+  return process.env.PUBLIC_BASE_URL || process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
 }
 
 router.get("/api/auth/providers", (req, res) => {
@@ -197,6 +205,19 @@ router.post("/api/register", authLimiter, async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     const user = createUser(email, hash, displayName);
+
+    if (!isEmailConfigured()) {
+      return res.status(503).json({ error: "E-Mail-Versand ist nicht konfiguriert" });
+    }
+
+    const token = createVerificationToken();
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    setEmailVerification(user.id, token, expiresAt);
+    await sendVerificationEmail({
+      to: email,
+      token,
+      baseUrl: getBaseUrl(req),
+    });
     
     // If user has a trial song, transfer it to their account
     const trialSongId = req.session?.trialSongId;
@@ -207,18 +228,7 @@ router.post("/api/register", authLimiter, async (req, res) => {
       }
     }
 
-    req.session.regenerate((err) => {
-      if (err) {
-        return res.status(500).json({ error: "Sitzung konnte nicht erstellt werden" });
-      }
-      req.session.userId = user.id;
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          return res.status(500).json({ error: "Sitzung konnte nicht gespeichert werden" });
-        }
-        res.json({ id: user.id, email: user.email, displayName: user.displayName, songCredits: user.songCredits });
-      });
-    });
+    res.json({ ok: true, requiresVerification: true, email: user.email });
   } catch (err) {
     res.status(500).json({ error: "Registrierung fehlgeschlagen" });
   }
@@ -240,6 +250,10 @@ router.post("/api/login", authLimiter, async (req, res) => {
   const user = findUserByEmail(email);
   if (!user) return res.status(401).json({ error: "E-Mail oder Passwort falsch" });
 
+  if (user.provider === "local" && !user.email_verified) {
+    return res.status(403).json({ error: "Bitte bestaetige deine E-Mail-Adresse.", code: "unverified" });
+  }
+
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) return res.status(401).json({ error: "E-Mail oder Passwort falsch" });
 
@@ -255,6 +269,59 @@ router.post("/api/login", authLimiter, async (req, res) => {
       res.json({ id: user.id, email: user.email, displayName: user.display_name, songCredits: user.song_credits });
     });
   });
+});
+
+router.post("/api/verify/resend", authLimiter, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  if (!email || !isValidEmail(email)) {
+    return res.status(200).json({ ok: true });
+  }
+
+  const user = findUserByEmail(email);
+  if (!user || user.provider !== "local") {
+    return res.json({ ok: true });
+  }
+
+  if (user.email_verified) {
+    return res.json({ ok: true, alreadyVerified: true });
+  }
+
+  if (!isEmailConfigured()) {
+    return res.status(503).json({ error: "E-Mail-Versand ist nicht konfiguriert" });
+  }
+
+  try {
+    const token = createVerificationToken();
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    setEmailVerification(user.id, token, expiresAt);
+    await sendVerificationEmail({
+      to: email,
+      token,
+      baseUrl: getBaseUrl(req),
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "E-Mail konnte nicht gesendet werden" });
+  }
+});
+
+router.get("/api/verify-email", async (req, res) => {
+  const token = typeof req.query?.token === "string" ? req.query.token : "";
+  if (!token) {
+    return res.redirect("/login.html?verify=invalid");
+  }
+
+  const user = findUserByVerificationToken(token);
+  if (!user) {
+    return res.redirect("/login.html?verify=invalid");
+  }
+
+  if (user.verify_expires && Date.now() > user.verify_expires) {
+    return res.redirect("/login.html?verify=expired");
+  }
+
+  markEmailVerified(user.id);
+  return res.redirect("/login.html?verify=success");
 });
 
 router.post("/api/logout", (req, res) => {

@@ -62,6 +62,16 @@ if (!userColumns.some((col) => col.name === "provider")) {
 if (!userColumns.some((col) => col.name === "stripe_customer_id")) {
   db.exec("ALTER TABLE users ADD COLUMN stripe_customer_id TEXT");
 }
+if (!userColumns.some((col) => col.name === "email_verified")) {
+  db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0");
+  db.prepare("UPDATE users SET email_verified = 1 WHERE id != 0").run();
+}
+if (!userColumns.some((col) => col.name === "verify_token")) {
+  db.exec("ALTER TABLE users ADD COLUMN verify_token TEXT");
+}
+if (!userColumns.some((col) => col.name === "verify_expires")) {
+  db.exec("ALTER TABLE users ADD COLUMN verify_expires INTEGER");
+}
 
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id) WHERE google_id IS NOT NULL");
 db.exec(`
@@ -103,7 +113,7 @@ export function createUser(email, passwordHash, displayName) {
   const now = Date.now();
   const normalizedEmail = email.toLowerCase();
   const info = db.prepare(
-    "INSERT INTO users (email, password_hash, display_name, song_credits, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?)"
+    "INSERT INTO users (email, password_hash, display_name, song_credits, email_verified, created_at, updated_at) VALUES (?, ?, ?, 1, 0, ?, ?)"
   ).run(normalizedEmail, passwordHash, displayName, now, now);
   return { id: info.lastInsertRowid, email: normalizedEmail, displayName, songCredits: 1 };
 }
@@ -112,7 +122,7 @@ export function createOAuthUser(email, passwordHash, displayName, provider, goog
   const now = Date.now();
   const normalizedEmail = email.toLowerCase();
   const info = db.prepare(
-    "INSERT INTO users (email, password_hash, display_name, song_credits, provider, google_id, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, ?, ?)"
+    "INSERT INTO users (email, password_hash, display_name, song_credits, provider, google_id, email_verified, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, 1, ?, ?)"
   ).run(normalizedEmail, passwordHash, displayName, provider, googleId || null, now, now);
   return { id: info.lastInsertRowid, email: normalizedEmail, displayName, songCredits: 1 };
 }
@@ -126,11 +136,27 @@ export function findUserByGoogleId(googleId) {
 }
 
 export function findUserById(id) {
-  return db.prepare("SELECT id, email, display_name, song_credits, is_admin, created_at FROM users WHERE id = ?").get(id);
+  return db.prepare("SELECT id, email, display_name, song_credits, is_admin, created_at, email_verified FROM users WHERE id = ?").get(id);
 }
 
 export function linkGoogleToUser(userId, googleId) {
   db.prepare("UPDATE users SET google_id = ?, updated_at = ? WHERE id = ?").run(googleId, Date.now(), userId);
+}
+
+export function setEmailVerification(userId, token, expiresAt) {
+  db.prepare(
+    "UPDATE users SET verify_token = ?, verify_expires = ?, email_verified = 0, updated_at = ? WHERE id = ?"
+  ).run(token, expiresAt, Date.now(), userId);
+}
+
+export function findUserByVerificationToken(token) {
+  return db.prepare("SELECT * FROM users WHERE verify_token = ?").get(token);
+}
+
+export function markEmailVerified(userId) {
+  db.prepare(
+    "UPDATE users SET email_verified = 1, verify_token = NULL, verify_expires = NULL, updated_at = ? WHERE id = ?"
+  ).run(Date.now(), userId);
 }
 
 export function getStripeCustomerId(userId) {

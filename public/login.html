@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Song Generator – Anmelden</title>
+  <title>Song Generator - Anmelden</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/vars.css">
@@ -20,7 +20,9 @@
         <span>Weitere Song-Credits nach Registrierung!</span>
       </div>
       <h1>Song Generator</h1>
-      <p class="subtitle">Registriere dich und erstelle weitere persönliche Songs mit KI!</p>
+      <p class="subtitle">Registriere dich und erstelle weitere persoenliche Songs mit KI!</p>
+
+      <div class="notice" id="auth-notice" style="display:none;"></div>
 
       <div class="social-login" id="social-login">
         <button type="button" class="google-btn" id="google-login-btn">
@@ -35,7 +37,6 @@
       </div>
 
       <div class="divider" aria-hidden="true"><span>oder</span></div>
-
 
       <div class="tab-bar">
         <button class="active" data-tab="login">Anmelden</button>
@@ -52,6 +53,7 @@
           <input type="password" id="login-password" required autocomplete="current-password">
         </div>
         <button type="submit" class="btn">Anmelden</button>
+        <button type="button" class="link-btn" id="resend-link" style="display:none;">Bestaetigungslink erneut senden</button>
         <div class="error-msg" id="login-error"></div>
       </form>
 
@@ -69,26 +71,26 @@
           <input type="password" id="reg-password" required minlength="8" autocomplete="new-password">
         </div>
         <div class="form-group">
-          <label for="reg-password-confirm">Passwort best??tigen</label>
+          <label for="reg-password-confirm">Passwort bestaetigen</label>
           <input type="password" id="reg-password-confirm" required minlength="8" autocomplete="new-password">
         </div>
         <div class="password-strength" id="password-strength">
           <div class="strength-bar"><span></span></div>
-          <p class="strength-text" id="strength-text">Passwortst??rke: ???</p>
+          <p class="strength-text" id="strength-text">Passwortstaerke: ?</p>
         </div>
         <div class="form-group checkbox">
           <label class="checkbox-label">
             <input type="checkbox" id="reg-terms" required>
-            <span>Ich akzeptiere die <a href="/terms.html">AGB</a> und die <a href="/privacy.html">Datenschutzerkl??rung</a>.</span>
+            <span>Ich akzeptiere die <a href="/terms.html">AGB</a> und die <a href="/privacy.html">Datenschutzerklaerung</a>.</span>
           </label>
         </div>
         <button type="submit" class="btn">Jetzt kostenlos registrieren</button>
-        <p class="form-note">Nach der Registrierung kannst du sofort deinen ersten Song erstellen!</p>
+        <p class="form-note">Nach der Registrierung bekommst du eine E-Mail zur Bestaetigung.</p>
         <div class="error-msg" id="reg-error"></div>
       </form>
 
       <div class="info-box">
-        <p>Nach der Registrierung erhältst du <strong>weitere Song-Credits</strong> und kannst deine Songs herunterladen. Weitere Infos auf unserer <a href="/landing.html">Marketing-Seite</a>.</p>
+        <p>Nach der Registrierung erhaeltst du <strong>weitere Song-Credits</strong> und kannst deine Songs herunterladen. Weitere Infos auf unserer <a href="/landing.html">Marketing-Seite</a>.</p>
       </div>
     </div>
   </div>

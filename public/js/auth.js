@@ -1,9 +1,20 @@
+const noticeEl = document.getElementById("auth-notice");
+const resendLink = document.getElementById("resend-link");
+
 // Check if already logged in - redirect to app
 const urlParams = new URLSearchParams(window.location.search);
 const tabParam = urlParams.get("tab");
 const nextParam = urlParams.get("next");
 const nextUrl = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 const errorParam = urlParams.get("error");
+const verifyParam = urlParams.get("verify");
+
+function showNotice(message, type = "success") {
+  if (!noticeEl) return;
+  noticeEl.textContent = message;
+  noticeEl.className = `notice ${type}`;
+  noticeEl.style.display = "block";
+}
 
 (async function checkAuth() {
   try {
@@ -64,6 +75,16 @@ if (googleBtn) {
   });
 }
 
+if (verifyParam) {
+  const verifyMap = {
+    success: "Email bestaetigt. Du kannst dich jetzt anmelden.",
+    expired: "Bestaetigungslink abgelaufen. Bitte fordere einen neuen an.",
+    invalid: "Bestaetigungslink ist ungueltig.",
+  };
+  showNotice(verifyMap[verifyParam] || "Email Bestaetigung fehlgeschlagen.", verifyParam === "success" ? "success" : "error");
+  switchAuthTab("login");
+}
+
 if (errorParam) {
   const errorMap = {
     google_config: "Google Login ist nicht konfiguriert.",
@@ -71,8 +92,8 @@ if (errorParam) {
     google_state: "Sitzung abgelaufen. Bitte erneut versuchen.",
     google_token: "Google Login fehlgeschlagen.",
     google_profile: "Google Profil konnte nicht geladen werden.",
-    google_email: "Google E-Mail ist ung??ltig.",
-    google_unverified: "Bitte best??tige deine Google E-Mail.",
+    google_email: "Google E-Mail ist ungueltig.",
+    google_unverified: "Bitte bestaetige deine Google E-Mail.",
     google_session: "Sitzung konnte nicht erstellt werden.",
     google_unknown: "Unbekannter Fehler beim Google Login.",
   };
@@ -87,6 +108,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   const errEl = document.getElementById("login-error");
   const btn = e.target.querySelector(".btn");
   errEl.textContent = "";
+  if (resendLink) resendLink.style.display = "none";
 
   const email = document.getElementById("login-email").value;
   const password = document.getElementById("login-password").value;
@@ -106,6 +128,9 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
       errEl.textContent = data.error || "Anmeldung fehlgeschlagen";
       btn.disabled = false;
       btn.textContent = "Anmelden";
+      if (data.code === "unverified" && resendLink) {
+        resendLink.style.display = "block";
+      }
       return;
     }
     
@@ -116,6 +141,35 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     btn.textContent = "Anmelden";
   }
 });
+
+if (resendLink) {
+  resendLink.addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value;
+    if (!email) {
+      showAuthError("Bitte gib deine E-Mail ein, um den Link erneut zu senden.");
+      return;
+    }
+    resendLink.disabled = true;
+    resendLink.textContent = "Sende...";
+    try {
+      const res = await fetch("/api/verify/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        showNotice("Bestaetigungslink gesendet. Bitte pruefe dein Postfach.", "success");
+      } else {
+        showNotice("E-Mail konnte nicht gesendet werden.", "error");
+      }
+    } catch {
+      showNotice("E-Mail konnte nicht gesendet werden.", "error");
+    } finally {
+      resendLink.disabled = false;
+      resendLink.textContent = "Bestaetigungslink erneut senden";
+    }
+  });
+}
 
 function getPasswordErrorClient(password) {
   if (!password) return "Passwort erforderlich";
@@ -143,15 +197,15 @@ function updatePasswordStrength(password) {
   const score = getPasswordScore(password);
   strengthBar.style.width = score + "%";
   if (!password) {
-    strengthText.textContent = "Passwortst?rke: ?";
+    strengthText.textContent = "Passwortstaerke: ?";
     return;
   }
   if (score >= 80) {
-    strengthText.textContent = "Passwortst?rke: stark";
+    strengthText.textContent = "Passwortstaerke: stark";
   } else if (score >= 50) {
-    strengthText.textContent = "Passwortst?rke: mittel";
+    strengthText.textContent = "Passwortstaerke: mittel";
   } else {
-    strengthText.textContent = "Passwortst?rke: schwach";
+    strengthText.textContent = "Passwortstaerke: schwach";
   }
 }
 
@@ -180,11 +234,11 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     return;
   }
   if (password !== passwordConfirm) {
-    errEl.textContent = "Passwörter stimmen nicht überein";
+    errEl.textContent = "Passwoerter stimmen nicht ueberein";
     return;
   }
   if (termsAccepted === false) {
-    errEl.textContent = "Bitte akzeptiere die AGB und Datenschutzerklärung.";
+    errEl.textContent = "Bitte akzeptiere die AGB und Datenschutzerklaerung.";
     return;
   }
 
@@ -205,10 +259,14 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
       btn.textContent = "Jetzt kostenlos registrieren";
       return;
     }
-    
-    window.location.href = nextUrl;
+
+    showNotice("Registrierung erfolgreich. Bitte bestaetige deine E-Mail.", "success");
+    switchAuthTab("login");
+    const loginEmail = document.getElementById("login-email");
+    if (loginEmail) loginEmail.value = email;
   } catch {
     errEl.textContent = "Verbindungsfehler. Bitte versuche es erneut.";
+  } finally {
     btn.disabled = false;
     btn.textContent = "Jetzt kostenlos registrieren";
   }
