@@ -275,8 +275,13 @@
       <div class="panel-card player-card-sticky">
         <button type="button" class="generate-btn" id="generate-btn" disabled>Song generieren</button>
         <div class="progress-bar" id="progress">
-          <div class="spinner"></div>
-          <span>Song wird generiert...</span>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-text" id="progress-text">Song wird generiert...</span>
+            <span class="progress-percent" id="progress-percent"></span>
+          </div>
         </div>
         
         <!-- Song Success Box -->

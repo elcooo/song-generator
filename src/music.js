@@ -129,9 +129,10 @@ async function submitGeneration(style, lyrics, songId, title) {
  * Poll Suno API until the task is complete or fails.
  * Returns { ok, audioUrl, error }
  */
-async function pollForResult(taskId, songId) {
+async function pollForResult(taskId, songId, onProgress) {
   const url = `${BASE_URL}/api/v1/generate/record-info?taskId=${taskId}`;
   const startTime = Date.now();
+  let lastStatus = "";
 
   while (Date.now() - startTime < MAX_POLL_TIME_MS) {
     await sleep(POLL_INTERVAL_MS);
@@ -162,10 +163,28 @@ async function pollForResult(taskId, songId) {
     }
 
     const status = data?.data?.status;
-    const elapsed = Math.round((Date.now() - startTime) / 1000);
-    logEvent("poll", { songId, taskId, status, elapsed: `${elapsed}s` });
+    const elapsedSec = Math.round((Date.now() - startTime) / 1000);
+    logEvent("poll", { songId, taskId, status, elapsed: `${elapsedSec}s` });
+
+    // Send progress updates to the user
+    if (onProgress && status !== lastStatus) {
+      lastStatus = status;
+      if (status === "PENDING") {
+        onProgress({ stage: "pending", message: "Auftrag wird vorbereitet...", percent: 10 });
+      } else if (status === "TEXT_SUCCESS") {
+        onProgress({ stage: "composing", message: "Musik wird komponiert...", percent: 30 });
+      } else if (status === "FIRST_SUCCESS") {
+        onProgress({ stage: "finalizing", message: "Song wird finalisiert...", percent: 80 });
+      }
+    }
+    // Also update percent based on elapsed time during TEXT_SUCCESS
+    if (onProgress && status === "TEXT_SUCCESS") {
+      const percent = Math.min(75, 30 + Math.round((elapsedSec / 180) * 45));
+      onProgress({ stage: "composing", message: "Musik wird komponiert...", percent });
+    }
 
     if (status === "SUCCESS" || status === "FIRST_SUCCESS") {
+      if (onProgress) onProgress({ stage: "downloading", message: "Audio wird heruntergeladen...", percent: 90 });
       const sunoData = data?.data?.response?.sunoData;
       if (sunoData && sunoData.length > 0) {
         const audioUrl = sunoData[0].audioUrl || sunoData[0].streamAudioUrl;
@@ -220,9 +239,13 @@ async function downloadAudio(audioUrl, songId) {
 
 /**
  * Generate music via Suno API.
- * Same interface as before: returns { filePath } on success, { error } on failure.
+ * Returns { filePath } on success, { error } on failure.
+ * @param {string} style
+ * @param {string} lyrics
+ * @param {number} songId
+ * @param {function} [onProgress] - optional callback({ stage, message, percent })
  */
-export async function generateMusic(style, lyrics, songId) {
+export async function generateMusic(style, lyrics, songId, onProgress) {
   logEvent("config", {
     songId,
     baseUrl: BASE_URL,
@@ -231,18 +254,20 @@ export async function generateMusic(style, lyrics, songId) {
   });
 
   // 1. Submit generation task
+  if (onProgress) onProgress({ stage: "submitting", message: "Auftrag wird gesendet...", percent: 5 });
   const submit = await submitGeneration(style, lyrics, songId);
   if (!submit.ok) {
     return { error: submit.error };
   }
 
   // 2. Poll for result
-  const poll = await pollForResult(submit.taskId, songId);
+  const poll = await pollForResult(submit.taskId, songId, onProgress);
   if (!poll.ok) {
     return { error: poll.error };
   }
 
   // 3. Download audio file
+  if (onProgress) onProgress({ stage: "downloading", message: "Audio wird heruntergeladen...", percent: 95 });
   return await downloadAudio(poll.audioUrl, songId);
 }
 

@@ -99,7 +99,8 @@ router.post("/api/generate", requireAuth, generateLimiter, async (req, res) => {
   // Generate in background
   try {
     updateSongStatus(song.id, "generating");
-    const result = await generateMusic(styleResult.value, lyricsResult.value, song.id);
+    const onProgress = (p) => broadcastToUser(userId, "song_progress", { songId: song.id, ...p });
+    const result = await generateMusic(styleResult.value, lyricsResult.value, song.id, onProgress);
 
     if (result.error) {
       updateSongStatus(song.id, "failed", null, result.error);
@@ -205,7 +206,8 @@ router.post("/api/songs/:id/retry", requireAuth, generateLimiter, async (req, re
 
   try {
     updateSongStatus(songId, "generating");
-    const result = await generateMusic(song.style, song.lyrics, songId);
+    const onProgress = (p) => broadcastToUser(userId, "song_progress", { songId, ...p });
+    const result = await generateMusic(song.style, song.lyrics, songId, onProgress);
 
     if (result.error) {
       updateSongStatus(songId, "failed", null, result.error);

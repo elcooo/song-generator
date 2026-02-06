@@ -46,6 +46,9 @@ const creditsCount = document.getElementById("credits-count");
 const lyricsContent = document.getElementById("lyrics-content");
 const generateBtn = document.getElementById("generate-btn");
 const progressBar = document.getElementById("progress");
+const progressFill = document.getElementById("progress-fill");
+const progressText = document.getElementById("progress-text");
+const progressPercent = document.getElementById("progress-percent");
 const audioPlayer = document.getElementById("audio-player");
 const songSuccessBox = document.getElementById("song-success-box");
 const playPauseBtn = document.getElementById("play-pause-btn");
@@ -846,6 +849,9 @@ generateBtn.addEventListener("click", async () => {
 
   generateBtn.disabled = true;
   progressBar.style.display = "flex";
+  if (progressFill) progressFill.style.width = "5%";
+  if (progressText) progressText.textContent = "Song wird generiert...";
+  if (progressPercent) progressPercent.textContent = "";
   audioPlayer.style.display = "none";
 
   try {
@@ -902,6 +908,13 @@ function setupSSE() {
       generateBtn.disabled = false;
       showWizardError("Song-Generierung fehlgeschlagen: " + (data.error || "Unbekannter Fehler"));
     }
+  });
+
+  es.addEventListener("song_progress", (e) => {
+    const data = JSON.parse(e.data);
+    if (progressFill) progressFill.style.width = (data.percent || 0) + "%";
+    if (progressText) progressText.textContent = data.message || "Song wird generiert...";
+    if (progressPercent) progressPercent.textContent = (data.percent || 0) + "%";
   });
 
   es.addEventListener("credits_update", (e) => {

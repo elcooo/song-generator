@@ -860,12 +860,47 @@
 
 .progress-bar {
   display: none;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   padding: 18px 20px;
   background: var(--glass-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(168, 85, 247, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 5%;
+  background: linear-gradient(90deg, var(--accent), #c084fc);
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.progress-percent {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .spinner {
@@ -880,12 +915,6 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.progress-bar span {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 
 /* Custom Audio Player Container */
