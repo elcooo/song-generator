@@ -20,7 +20,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, "..", "..", "public");
-const audioDir = join(publicDir, "audio");
+const audioDir = process.env.AUDIO_DIR ? resolve(process.env.AUDIO_DIR) : resolve(join(publicDir, "audio"));
 
 const router = Router();
 const generatingCount = new Map();
@@ -51,7 +51,8 @@ function refundCredit(userId) {
 
 function resolveAudioPath(filePath) {
   if (!filePath) return null;
-  const resolved = resolve(publicDir, filePath);
+  const relative = String(filePath).replace(/^\/?audio[\\/]/, "");
+  const resolved = resolve(audioDir, relative);
   if (!resolved.startsWith(audioDir)) return null;
   return resolved;
 }

@@ -1,14 +1,15 @@
 import Database from "better-sqlite3";
 import bcrypt from "bcrypt";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { mkdirSync } from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(__dirname, "..", "data");
+const dataDir = process.env.DATA_DIR ? resolve(process.env.DATA_DIR) : join(__dirname, "..", "data");
 mkdirSync(dataDir, { recursive: true });
 
-const db = new Database(join(dataDir, "app.db"));
+const dbPath = process.env.DB_PATH ? resolve(process.env.DB_PATH) : join(dataDir, "app.db");
+const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 db.pragma("busy_timeout = 5000");

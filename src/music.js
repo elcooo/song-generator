@@ -1,11 +1,11 @@
 import { writeFile } from "fs/promises";
 import { mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { addMinimaxLog } from "./logs/minimaxLogs.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const audioDir = join(__dirname, "..", "public", "audio");
+const audioDir = process.env.AUDIO_DIR ? resolve(process.env.AUDIO_DIR) : join(__dirname, "..", "public", "audio");
 mkdirSync(audioDir, { recursive: true });
 
 // Suno API config

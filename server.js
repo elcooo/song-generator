@@ -5,7 +5,7 @@ import connectSqlite3 from "connect-sqlite3";
 import compression from "compression";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { mkdirSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,13 +47,16 @@ app.use(
 );
 
 // Session store
-const dataDir = join(__dirname, "data");
+const dataDir = process.env.DATA_DIR ? resolve(process.env.DATA_DIR) : join(__dirname, "data");
 mkdirSync(dataDir, { recursive: true });
 const SQLiteStore = connectSqlite3(session);
+const sessionDb = process.env.SESSION_DB || "sessions.db";
+const audioDir = process.env.AUDIO_DIR ? resolve(process.env.AUDIO_DIR) : join(__dirname, "public", "audio");
+mkdirSync(audioDir, { recursive: true });
 
 app.use(
   session({
-    store: new SQLiteStore({ db: "sessions.db", dir: dataDir }),
+    store: new SQLiteStore({ db: sessionDb, dir: dataDir }),
     name: "sg.sid",
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -107,6 +110,7 @@ app.get(["/admin", "/admin.html"], requireAdmin, (req, res) => {
 
 // Static files (after specific routes)
 app.use(express.static(join(__dirname, "public")));
+app.use("/audio", express.static(audioDir));
 
 // Fallback error handler
 app.use((err, req, res, next) => {
