@@ -16,7 +16,7 @@ dotenv.config({ path: join(__dirname, ".env") });
 // Check required env vars
 const required = [
   ["OPENAI_API_KEY", process.env.OPENAI_API_KEY],
-  ["MINIMAX_API_KEY", process.env.MINIMAX_API_KEY],
+  ["SUNO_API_KEY", process.env.SUNO_API_KEY],
   ["SESSION_SECRET", process.env.SESSION_SECRET],
 ];
 const missing = required.filter(([, v]) => !v).map(([k]) => k);
