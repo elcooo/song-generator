@@ -15,6 +15,7 @@ const MODEL = process.env.SUNO_MODEL || "V4_5";
 const POLL_INTERVAL_MS = Number(process.env.SUNO_POLL_INTERVAL_MS) || 10000;
 const MAX_POLL_TIME_MS = Number(process.env.SUNO_MAX_POLL_TIME_MS) || 300000;
 const AUDIO_DOWNLOAD_TIMEOUT_MS = Number(process.env.SUNO_AUDIO_TIMEOUT_MS) || 120000;
+const CALLBACK_URL = (process.env.PUBLIC_BASE_URL || "https://songme.site").replace(/\/$/, "") + "/api/suno/callback";
 
 // Debug: show masked key on startup
 const masked = API_KEY.length > 12
@@ -62,7 +63,7 @@ async function submitGeneration(style, lyrics, songId, title) {
     style,
     title: title || `Song ${songId}`,
     prompt: lyrics,
-    callBackUrl: "",
+    callBackUrl: CALLBACK_URL,
   };
 
   logEvent("request", {

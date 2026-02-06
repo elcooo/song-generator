@@ -83,6 +83,12 @@ app.use(eventsRoutes);
 app.use(adminRoutes);
 app.use(billingRoutes);
 
+// Suno API callback (receives generation results, logged for debugging)
+app.post("/api/suno/callback", (req, res) => {
+  console.log("[suno] callback received:", JSON.stringify(req.body).slice(0, 2000));
+  res.json({ ok: true });
+});
+
 // Route: Direct to tool (trial or app)
 app.get("/", (req, res) => {
   if (req.session && req.session.userId) {
