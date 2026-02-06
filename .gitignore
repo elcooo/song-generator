@@ -9,6 +9,6 @@ sessions.db
 *.log
 .claude/
 .cursor/
-src/logs/
+src/logs/*.log
 nul
 test.html
