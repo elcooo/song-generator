@@ -213,6 +213,7 @@ router.post("/api/register", authLimiter, async (req, res) => {
     const token = createVerificationToken();
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
     setEmailVerification(user.id, token, expiresAt);
+    console.log("[auth] verify token created", { userId: user.id, expiresAt });
     await sendVerificationEmail({
       to: email,
       token,
@@ -294,6 +295,7 @@ router.post("/api/verify/resend", authLimiter, async (req, res) => {
     const token = createVerificationToken();
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
     setEmailVerification(user.id, token, expiresAt);
+    console.log("[auth] resend verify token", { userId: user.id, expiresAt });
     await sendVerificationEmail({
       to: email,
       token,
@@ -321,6 +323,7 @@ router.get("/api/verify-email", async (req, res) => {
   }
 
   markEmailVerified(user.id);
+  console.log("[auth] email verified", { userId: user.id });
   return res.redirect("/login.html?verify=success");
 });
 

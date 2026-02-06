@@ -26,6 +26,8 @@ export async function sendVerificationEmail({ to, token, baseUrl }) {
       <p>${verifyUrl}</p>`
   };
 
+  console.log("[email] sending verification", { to, from: MAIL_FROM, baseUrl });
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -35,10 +37,16 @@ export async function sendVerificationEmail({ to, token, baseUrl }) {
     body: JSON.stringify(payload),
   });
 
+  const text = await res.text();
+  console.log("[email] resend response", { status: res.status, body: text.slice(0, 800) });
+
   if (!res.ok) {
-    const text = await res.text();
     throw new Error(`Resend error: ${res.status} ${text}`);
   }
 
-  return res.json();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { ok: true };
+  }
 }
