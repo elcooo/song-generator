@@ -6,7 +6,7 @@ import compression from "compression";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
-import { mkdirSync } from "fs";
+import { mkdirSync, existsSync, statSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -53,6 +53,22 @@ const SQLiteStore = connectSqlite3(session);
 const sessionDb = process.env.SESSION_DB || "sessions.db";
 const audioDir = process.env.AUDIO_DIR ? resolve(process.env.AUDIO_DIR) : join(__dirname, "public", "audio");
 mkdirSync(audioDir, { recursive: true });
+
+const dbPath = process.env.DB_PATH ? resolve(process.env.DB_PATH) : join(dataDir, "app.db");
+const sessionPath = resolve(dataDir, sessionDb);
+const statOrNull = (p) => {
+  try {
+    return statSync(p);
+  } catch {
+    return null;
+  }
+};
+const dbStat = statOrNull(dbPath);
+const sessionStat = statOrNull(sessionPath);
+console.log("[storage] dataDir=", dataDir);
+console.log("[storage] dbPath=", dbPath, "exists=", existsSync(dbPath), "size=", dbStat?.size ?? 0);
+console.log("[storage] sessionDb=", sessionPath, "exists=", existsSync(sessionPath), "size=", sessionStat?.size ?? 0);
+console.log("[storage] audioDir=", audioDir, "exists=", existsSync(audioDir));
 
 app.use(
   session({
