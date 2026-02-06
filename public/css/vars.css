@@ -1,23 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-tertiary: #1a1a2e;
-  --bg-input: #16162a;
-  --bg-hover: #22223a;
-  --accent: #8b5cf6;
-  --accent-hover: #a78bfa;
-  --accent-muted: rgba(139, 92, 246, 0.15);
-  --accent-glow: rgba(139, 92, 246, 0.3);
-  --text-primary: #e9edef;
-  --text-secondary: #8696a0;
-  --text-muted: #5a6a74;
-  --border: #2a2a4a;
+  /* ===== Premium Gradient Background ===== */
+  --bg-gradient: linear-gradient(
+    145deg, 
+    #f5e6f8 0%, 
+    #edd9f5 20%,
+    #e8d0f0 40%, 
+    #dfc4e8 60%,
+    #e5d0ed 80%,
+    #f0dff5 100%
+  );
+  
+  /* ===== Glassmorphism Surfaces ===== */
+  --glass-bg: rgba(255, 255, 255, 0.35);
+  --glass-bg-strong: rgba(255, 255, 255, 0.55);
+  --glass-bg-light: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(20px);
+  --glass-blur-strong: blur(32px);
+  
+  /* ===== Accent Colors ===== */
+  --accent: #a855f7;
+  --accent-soft: rgba(168, 85, 247, 0.12);
+  --accent-medium: rgba(168, 85, 247, 0.2);
+  --accent-glow: rgba(168, 85, 247, 0.35);
+  --accent-gradient: linear-gradient(135deg, #a855f7 0%, #c084fc 50%, #d8b4fe 100%);
+  
+  /* ===== Text Colors ===== */
+  --text-primary: #3d2952;
+  --text-secondary: rgba(61, 41, 82, 0.7);
+  --text-muted: rgba(61, 41, 82, 0.5);
+  --text-soft: rgba(61, 41, 82, 0.4);
+  
+  /* ===== Feedback Colors ===== */
   --success: #22c55e;
-  --error: #ef4444;
+  --error: #f43f5e;
   --warning: #f59e0b;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --radius: 12px;
-  --radius-sm: 8px;
+  
+  /* ===== Soft Shadows (keine harten Schatten!) ===== */
+  --shadow-soft: 0 4px 24px rgba(168, 85, 247, 0.06);
+  --shadow-medium: 0 8px 32px rgba(168, 85, 247, 0.08);
+  --shadow-glow: 0 8px 40px rgba(168, 85, 247, 0.15);
+  --shadow-float: 0 12px 48px rgba(168, 85, 247, 0.12);
+  
+  /* ===== Border Radius (groß und weich) ===== */
+  --radius-xs: 12px;
+  --radius-sm: 16px;
+  --radius: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 32px;
+  --radius-pill: 100px;
+  
+  /* ===== Typography ===== */
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* ===== Transitions ===== */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -28,18 +69,62 @@
 
 body {
   font-family: var(--font);
-  background: var(--bg-primary);
+  background: var(--bg-gradient);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* Sanfter animierter Hintergrund mit Blob-Effekten */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 15%, rgba(232, 180, 255, 0.5), transparent 50%),
+    radial-gradient(ellipse 60% 70% at 90% 25%, rgba(200, 160, 240, 0.45), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 85%, rgba(220, 170, 250, 0.4), transparent 50%),
+    radial-gradient(ellipse 50% 50% at 75% 55%, rgba(210, 150, 230, 0.35), transparent 50%),
+    radial-gradient(ellipse 40% 40% at 25% 65%, rgba(225, 180, 245, 0.3), transparent 50%);
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+  animation: floatBlobs 20s ease-in-out infinite;
+}
+
+@keyframes floatBlobs {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(10px, -15px) scale(1.02); }
+  50% { transform: translate(-5px, 10px) scale(0.98); }
+  75% { transform: translate(-10px, -5px) scale(1.01); }
+}
+
+/* Focus visible for accessibility - weich */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+
+/* Custom Scrollbar - dezent */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+  background: rgba(168, 85, 247, 0.2);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.35);
 }

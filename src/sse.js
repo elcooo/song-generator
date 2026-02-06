@@ -1,4 +1,4 @@
-// Per-user SSE broadcasting
+﻿// Per-user SSE broadcasting
 const userClients = new Map(); // userId -> Set<res>
 
 export function addClient(userId, res) {
@@ -18,6 +18,11 @@ export function broadcastToUser(userId, event, data) {
   if (!clients) return;
   const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of clients) {
-    client.write(msg);
+    try {
+      client.write(msg);
+    } catch {
+      clients.delete(client);
+    }
   }
+  if (clients.size === 0) userClients.delete(userId);
 }

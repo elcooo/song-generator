@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credits kaufen – Song Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/vars.css">
+  <link rel="stylesheet" href="css/checkout.css">
+</head>
+<body>
+  <main class="checkout-page">
+    <div class="checkout-card">
+      <div class="checkout-header">
+        <h1>Credits aufladen</h1>
+        <p>Mehr Songs sofort erstellen – sicher und in Sekunden bezahlt.</p>
+      </div>
+
+      <div class="notice" id="checkout-notice" style="display:none;"></div>
+
+      <div class="price-box">
+        <div class="price-label" id="price-label">Song-Credits</div>
+        <div class="price-amount" id="price-amount">Preis wird geladen...</div>
+        <div class="price-meta" id="price-meta"></div>
+      </div>
+
+      <button class="checkout-btn" id="checkout-btn">Mit Stripe bezahlen</button>
+      <p class="secure-note">Sichere Zahlung über Stripe. Sofortige Freischaltung nach Zahlung.</p>
+
+      <a class="back-link" href="/">Zurück zur App</a>
+    </div>
+  </main>
+
+  <script src="js/checkout.js"></script>
+</body>
+</html>

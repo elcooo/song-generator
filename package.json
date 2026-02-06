@@ -4,19 +4,31 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "AI Song Generator Web App",
+  "keywords": [
+    "ai",
+    "music",
+    "song-generator",
+    "lyrics",
+    "openai",
+    "minimax"
+  ],
+  "author": "Song Generator Team",
+  "license": "UNLICENSED",
+  "description": "AI-powered song generator - Create personalized songs with custom lyrics and music",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
+    "compression": "^1.7.4",
     "connect-sqlite3": "^0.9.16",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.4.0",
     "express-session": "^1.19.0",
-    "openai": "^6.17.0"
+    "helmet": "^7.1.0",
+    "openai": "^6.17.0",
+    "stripe": "^16.12.0"
   }
 }

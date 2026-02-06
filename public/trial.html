@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Generator – Dein KI-Song kostenlos</title>
+  <meta name="description" content="Erstelle deinen persönlichen Song mit KI – komplett kostenlos und ohne Registrierung.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/vars.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="initial-loader" id="initial-loader">
+    <div class="loader-content">
+      <div class="loader-logo">Song Generator</div>
+      <div class="loader-spinner"></div>
+      <p>Wird geladen...</p>
+    </div>
+  </div>
+
+  <header class="top-bar trial-header" role="banner">
+    <div class="logo">Song Generator</div>
+    <div class="trial-badge">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span>1 Song gratis</span>
+    </div>
+    <div class="trial-actions">
+      <a href="/login.html" class="login-link">Anmelden</a>
+      <a href="/login.html?tab=register" class="register-btn">Registrieren</a>
+    </div>
+  </header>
+
+  <main class="app-layout trial-layout">
+    <section class="wizard-panel">
+      <div class="wizard-progress" id="wizard-progress">
+        <div class="progress-step active" data-step="0">
+          <span class="step-num">1</span>
+          <span class="step-label">Anlass</span>
+          <span class="step-selection" data-selection="occasion"></span>
+        </div>
+        <div class="progress-step" data-step="1">
+          <span class="step-num">2</span>
+          <span class="step-label">Für wen</span>
+          <span class="step-selection" data-selection="recipient"></span>
+        </div>
+        <div class="progress-step" data-step="2">
+          <span class="step-num">3</span>
+          <span class="step-label">Name</span>
+          <span class="step-selection" data-selection="name"></span>
+        </div>
+        <div class="progress-step" data-step="3">
+          <span class="step-num">4</span>
+          <span class="step-label">Details</span>
+          <span class="step-selection" data-selection="details"></span>
+        </div>
+        <div class="progress-step" data-step="4">
+          <span class="step-num">5</span>
+          <span class="step-label">Stil</span>
+          <span class="step-selection" data-selection="style"></span>
+        </div>
+      </div>
+
+      <div class="wizard-steps" id="wizard-steps">
+        <!-- Step 0: Anlass -->
+        <div class="wizard-step active" data-step="0">
+          <h3>Wähle den Anlass</h3>
+          <p class="step-desc">Für welchen Anlass soll der Song sein?</p>
+          <div class="option-cards">
+            <button class="option-card" data-value="Geburtstag" data-suggest-recipient="">🎂 Geburtstag</button>
+            <button class="option-card" data-value="Hochzeit" data-suggest-recipient="Brautpaar">💒 Hochzeit</button>
+            <button class="option-card" data-value="Jubiläum" data-suggest-recipient="">🎉 Jubiläum</button>
+            <button class="option-card" data-value="Valentinstag" data-suggest-recipient="Partner/in">❤️ Valentinstag</button>
+            <button class="option-card" data-value="Weihnachten" data-suggest-recipient="Familie">🎄 Weihnachten</button>
+            <button class="option-card" data-value="Muttertag" data-suggest-recipient="Mutter">💐 Muttertag</button>
+            <button class="option-card" data-value="Vatertag" data-suggest-recipient="Vater">👔 Vatertag</button>
+            <button class="option-card" data-value="Geburt" data-suggest-recipient="Baby">👶 Geburt</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigenen Anlass eingeben..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 1: Für wen -->
+        <div class="wizard-step" data-step="1">
+          <h3>Für wen ist der Song?</h3>
+          <p class="step-desc">Wer soll mit dem Song überrascht werden?</p>
+          <div class="option-cards" id="recipient-cards">
+            <button class="option-card" data-value="Freund/in">👫 Freund/in</button>
+            <button class="option-card" data-value="Partner/in">💑 Partner/in</button>
+            <button class="option-card" data-value="Mutter">👩 Mutter</button>
+            <button class="option-card" data-value="Vater">👨 Vater</button>
+            <button class="option-card" data-value="Kind">👧 Kind</button>
+            <button class="option-card" data-value="Baby">👶 Baby</button>
+            <button class="option-card" data-value="Geschwister">👧👦 Geschwister</button>
+            <button class="option-card" data-value="Großeltern">👴👵 Großeltern</button>
+            <button class="option-card" data-value="Familie">👨‍👩‍👧‍👦 Familie</button>
+            <button class="option-card" data-value="Brautpaar">💒 Brautpaar</button>
+            <button class="option-card" data-value="Kollege/in">💼 Kollege/in</button>
+            <button class="option-card" data-value="Gruppe">👥 Gruppe</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigene Angabe eingeben..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 2: Name -->
+        <div class="wizard-step" data-step="2">
+          <h3>Wie heißt die Person?</h3>
+          <p class="step-desc">Der Name wird im Song verwendet.</p>
+          <div class="name-input-area">
+            <input type="text" id="name-input" placeholder="z.B. Maria, Tom, Mama..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 3: Details -->
+        <div class="wizard-step" data-step="3">
+          <h3>Persönliche Details</h3>
+          <p class="step-desc">Erzähle etwas über die Person oder den Anlass. Je mehr Details, desto persönlicher der Song. (Optional)</p>
+          <div class="details-input-area">
+            <textarea id="details-input" rows="5" placeholder=""></textarea>
+          </div>
+          <div class="details-examples" id="details-examples">
+            <span class="example-label">💡 Beispiel:</span>
+            <span class="example-text" id="example-text"></span>
+          </div>
+        </div>
+
+        <!-- Step 4: Stil -->
+        <div class="wizard-step" data-step="4">
+          <h3>Wähle den Musikstil</h3>
+          <p class="step-desc">Welcher Stil passt am besten?</p>
+          <div class="option-cards">
+            <button class="option-card" data-value="Pop">🎵 Pop</button>
+            <button class="option-card" data-value="Rock">🎸 Rock</button>
+            <button class="option-card" data-value="Rap">🎤 Rap</button>
+            <button class="option-card" data-value="Schlager">🎺 Schlager</button>
+            <button class="option-card" data-value="Ballade">🎹 Ballade</button>
+            <button class="option-card" data-value="Country">🤠 Country</button>
+            <button class="option-card" data-value="Jazz">🎷 Jazz</button>
+            <button class="option-card" data-value="Elektronisch">🎧 Elektronisch</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigenen Stil eingeben..." autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button type="button" class="wizard-back-btn" id="wizard-back-btn" style="visibility: hidden;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Zurück
+        </button>
+        <span class="wizard-step-indicator" id="wizard-step-indicator">Schritt 1 von 5</span>
+        <button type="button" class="wizard-next-btn" id="wizard-next-btn" disabled>
+          Weiter
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="lyrics-generating" id="lyrics-generating" style="display:none;">
+        <div class="spinner"></div>
+        <span>Lyrics werden erstellt...</span>
+      </div>
+    </section>
+
+    <!-- Right: Info Panel -->
+    <aside class="info-panel">
+      <div class="panel-card lyrics-card">
+        <div class="panel-header">
+          <h3>Lyrics</h3>
+        </div>
+        <div class="lyrics-content" id="trial-lyrics-content" role="region" aria-label="Songtext">
+          <div class="lyrics-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <p>Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card player-card-sticky">
+        <button type="button" class="generate-btn" id="trial-generate-btn" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Song generieren
+        </button>
+        <div class="progress-bar" id="trial-progress">
+          <div class="spinner"></div>
+          <span>Song wird generiert... (ca. 1-2 Min.)</span>
+        </div>
+        
+        <!-- Song Fertig Success Box -->
+        <div class="song-success-box" id="song-success-box" style="display:none;">
+          <div class="success-header">
+            <div class="success-icon">🎉</div>
+            <div class="success-text">
+              <h4>Dein Song ist fertig!</h4>
+              <p>Hör ihn dir jetzt an</p>
+            </div>
+          </div>
+          <div class="custom-audio-player" id="custom-audio-player">
+            <button type="button" class="play-pause-btn" id="play-pause-btn">
+              <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <svg class="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            </button>
+            <div class="audio-progress-container">
+              <div class="audio-progress-bar" id="audio-progress-bar">
+                <div class="audio-progress-fill" id="audio-progress-fill"></div>
+              </div>
+              <div class="audio-time">
+                <span id="audio-current-time">0:00</span>
+                <span id="audio-duration">0:00</span>
+              </div>
+            </div>
+          </div>
+          <audio id="trial-audio-player" style="display:none;"></audio>
+        </div>
+
+        <div class="trial-cta" id="trial-cta" style="display:none;">
+          <div class="trial-cta-content">
+            <h3>Gefällt dir dein Song?</h3>
+            <p>Registriere dich kostenlos, um ihn herunterzuladen und weitere Songs zu erstellen.</p>
+            <a href="/login.html?tab=register" class="cta-btn">Kostenlos registrieren</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="js/trial.js" type="module"></script>
+</body>
+</html>

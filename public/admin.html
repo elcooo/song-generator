@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Generator Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/vars.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <a class="logo admin-logo-link" href="/admin">Song Generator Admin</a>
+    <div class="header-actions">
+      <a class="btn ghost" href="/">Zur App</a>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <section class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Nutzer</div>
+        <div class="stat-value" id="stat-users">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Admins</div>
+        <div class="stat-value" id="stat-admins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Songs gesamt</div>
+        <div class="stat-value" id="stat-songs">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fertig</div>
+        <div class="stat-value" id="stat-completed">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fehlgeschlagen</div>
+        <div class="stat-value" id="stat-failed">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Credits gesamt</div>
+        <div class="stat-value" id="stat-credits">0</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Nutzerverwaltung</h2>
+        <div class="panel-controls">
+          <input type="search" id="user-search" placeholder="Suche nach E-Mail oder Name">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>E-Mail</th>
+              <th>Name</th>
+              <th>Credits</th>
+              <th>Admin</th>
+              <th>Erstellt</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Songverwaltung</h2>
+        <div class="panel-controls">
+          <input type="search" id="song-search" placeholder="Suche nach Stil oder Nutzer-ID">
+          <select id="song-status">
+            <option value="">Alle Status</option>
+            <option value="completed">Fertig</option>
+            <option value="generating">Generiert</option>
+            <option value="pending">Wartend</option>
+            <option value="failed">Fehlgeschlagen</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="songs-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Stil</th>
+              <th>Status</th>
+              <th>Erstellt</th>
+              <th>Datei</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="songs-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Minimax Diagnose</h2>
+        <div class="panel-controls">
+          <button type="button" class="btn" id="minimax-check-btn">Check</button>
+          <button type="button" class="btn ghost" id="minimax-clear-btn">Clear</button>
+        </div>
+      </div>
+      <div class="log-box" id="minimax-log"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/admin.js" type="module"></script>
+</body>
+</html>

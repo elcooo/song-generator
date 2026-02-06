@@ -2,5 +2,13 @@ node_modules/
 .env
 data/
 public/audio/
+public/songs/
 sessions.db
 *.db
+.DS_Store
+*.log
+.claude/
+.cursor/
+src/logs/
+nul
+test.html

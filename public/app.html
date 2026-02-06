@@ -4,63 +4,452 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Song Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/vars.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="logo">Song Generator</div>
+  <header class="top-bar" role="banner">
+    <button type="button" class="logo-btn" id="logo-btn" aria-label="Zur Startseite">Song Generator</button>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="create">Neuer Song</button>
+      <button class="tab-btn" data-tab="profile">Profil</button>
+    </nav>
     <div class="user-info">
       <span class="user-name" id="user-name"></span>
-      <button class="logout-btn" id="logout-btn">Abmelden</button>
+      <a href="/admin" class="admin-link" id="admin-link" style="display:none;">Admin</a>
+      <div class="header-credits" id="header-credits">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </svg>
+        <span class="credits-count" id="credits-count">–</span>
+        <span class="credits-text">Songs</span>
+      </div>
+      <button type="button" class="logout-btn" id="logout-btn">Abmelden</button>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="app-layout">
-    <!-- Left: Chat -->
-    <section class="chat-panel">
-      <div class="chat-messages" id="chat-messages">
-        <!-- Messages render here -->
+  <!-- Home Page -->
+  <main class="home-page" id="home-page">
+    <div class="home-container">
+      <section class="welcome-section">
+        <h1>Willkommen zurück, <span id="welcome-name"></span>!</h1>
+        <p>Erstelle deinen persönlichen Song mit KI – für jeden Anlass.</p>
+      </section>
+
+      <section class="stats-section">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="total-songs">0</h3>
+            <p>Songs erstellt</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="songs-credits-stat">–</h3>
+            <p>Verfügbare Songs</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="songs-section">
+        <div class="section-header">
+          <h2>Deine Songs</h2>
+          <button type="button" class="view-all-btn" id="view-all-btn">Alle anzeigen</button>
+        </div>
+        <div class="songs-grid" id="home-songs-grid">
+          <!-- Recent songs render here -->
+        </div>
+        <div class="songs-empty" id="home-songs-empty" style="display:none;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          <p>Noch keine Songs erstellt. Starte jetzt und lass die KI deinen ersten Song schreiben.</p>
+          <button type="button" class="create-first-btn" id="create-first-btn">Ersten Song erstellen</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- All Songs Page -->
+  <main class="all-songs-page" id="all-songs-page" style="display:none;">
+    <div class="page-container">
+      <div class="page-header">
+        <div>
+          <h1>Alle Songs</h1>
+          <p>Verwalte deine gesamte Song-Bibliothek</p>
+        </div>
+        <button type="button" class="back-btn" id="back-to-home-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Zurück
+        </button>
       </div>
-      <div class="typing-indicator" id="typing">
-        <span></span><span></span><span></span>
+      <div class="songs-grid" id="all-songs-grid">
+        <!-- All songs render here -->
       </div>
-      <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Schreib deine Song-Idee..." autocomplete="off">
-        <button id="send-btn">Senden</button>
+      <div class="songs-empty" id="all-songs-empty" style="display:none;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </svg>
+        <p>Noch keine Songs erstellt.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Page -->
+  <main class="app-layout" id="create-page" style="display:none;">
+    <section class="wizard-panel">
+      <div class="wizard-header">
+        <h2>Neuer Song</h2>
+        <button type="button" class="reset-wizard-btn" id="reset-wizard-btn" title="Neu starten">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 1 3.2-6.8"/>
+            <polyline points="3 4 3 9 8 9"/>
+          </svg>
+          Neu starten
+        </button>
+      </div>
+
+      <div class="wizard-progress" id="wizard-progress">
+        <div class="progress-step active" data-step="0">
+          <span class="step-num">1</span>
+          <span class="step-label">Anlass</span>
+          <span class="step-selection" data-selection="occasion"></span>
+        </div>
+        <div class="progress-step" data-step="1">
+          <span class="step-num">2</span>
+          <span class="step-label">Für wen</span>
+          <span class="step-selection" data-selection="recipient"></span>
+        </div>
+        <div class="progress-step" data-step="2">
+          <span class="step-num">3</span>
+          <span class="step-label">Name</span>
+          <span class="step-selection" data-selection="name"></span>
+        </div>
+        <div class="progress-step" data-step="3">
+          <span class="step-num">4</span>
+          <span class="step-label">Details</span>
+          <span class="step-selection" data-selection="details"></span>
+        </div>
+        <div class="progress-step" data-step="4">
+          <span class="step-num">5</span>
+          <span class="step-label">Stil</span>
+          <span class="step-selection" data-selection="style"></span>
+        </div>
+      </div>
+
+      <div class="wizard-steps" id="wizard-steps">
+        <!-- Step 0: Anlass -->
+        <div class="wizard-step active" data-step="0">
+          <h3>Wähle den Anlass</h3>
+          <p class="step-desc">Für welchen Anlass soll der Song sein?</p>
+          <div class="option-cards">
+            <button class="option-card" data-value="Geburtstag" data-suggest-recipient="">🎂 Geburtstag</button>
+            <button class="option-card" data-value="Hochzeit" data-suggest-recipient="Brautpaar">💒 Hochzeit</button>
+            <button class="option-card" data-value="Jubiläum" data-suggest-recipient="">🎉 Jubiläum</button>
+            <button class="option-card" data-value="Valentinstag" data-suggest-recipient="Partner/in">❤️ Valentinstag</button>
+            <button class="option-card" data-value="Weihnachten" data-suggest-recipient="Familie">🎄 Weihnachten</button>
+            <button class="option-card" data-value="Muttertag" data-suggest-recipient="Mutter">💐 Muttertag</button>
+            <button class="option-card" data-value="Vatertag" data-suggest-recipient="Vater">👔 Vatertag</button>
+            <button class="option-card" data-value="Geburt" data-suggest-recipient="Baby">👶 Geburt</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigenen Anlass eingeben..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 1: Für wen -->
+        <div class="wizard-step" data-step="1">
+          <h3>Für wen ist der Song?</h3>
+          <p class="step-desc">Wer soll mit dem Song überrascht werden?</p>
+          <div class="option-cards" id="recipient-cards">
+            <button class="option-card" data-value="Freund/in">👫 Freund/in</button>
+            <button class="option-card" data-value="Partner/in">💑 Partner/in</button>
+            <button class="option-card" data-value="Mutter">👩 Mutter</button>
+            <button class="option-card" data-value="Vater">👨 Vater</button>
+            <button class="option-card" data-value="Kind">👧 Kind</button>
+            <button class="option-card" data-value="Baby">👶 Baby</button>
+            <button class="option-card" data-value="Geschwister">👧👦 Geschwister</button>
+            <button class="option-card" data-value="Großeltern">👴👵 Großeltern</button>
+            <button class="option-card" data-value="Familie">👨‍👩‍👧‍👦 Familie</button>
+            <button class="option-card" data-value="Brautpaar">💒 Brautpaar</button>
+            <button class="option-card" data-value="Kollege/in">💼 Kollege/in</button>
+            <button class="option-card" data-value="Gruppe">👥 Gruppe</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigene Angabe eingeben..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 2: Name -->
+        <div class="wizard-step" data-step="2">
+          <h3>Wie heißt die Person?</h3>
+          <p class="step-desc">Der Name wird im Song verwendet.</p>
+          <div class="name-input-area">
+            <input type="text" id="name-input" placeholder="z.B. Maria, Tom, Mama..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Step 3: Details -->
+        <div class="wizard-step" data-step="3">
+          <h3>Persönliche Details</h3>
+          <p class="step-desc">Erzähle etwas über die Person oder den Anlass. Je mehr Details, desto persönlicher der Song. (Optional)</p>
+          <div class="details-input-area">
+            <textarea id="details-input" rows="5" placeholder=""></textarea>
+          </div>
+          <div class="details-examples" id="details-examples">
+            <span class="example-label">💡 Beispiel:</span>
+            <span class="example-text" id="example-text"></span>
+          </div>
+        </div>
+
+        <!-- Step 4: Stil -->
+        <div class="wizard-step" data-step="4">
+          <h3>Wähle den Musikstil</h3>
+          <p class="step-desc">Welcher Stil passt am besten?</p>
+          <div class="option-cards">
+            <button class="option-card" data-value="Pop">🎵 Pop</button>
+            <button class="option-card" data-value="Rock">🎸 Rock</button>
+            <button class="option-card" data-value="Rap">🎤 Rap</button>
+            <button class="option-card" data-value="Schlager">🎺 Schlager</button>
+            <button class="option-card" data-value="Ballade">🎹 Ballade</button>
+            <button class="option-card" data-value="Country">🤠 Country</button>
+            <button class="option-card" data-value="Jazz">🎷 Jazz</button>
+            <button class="option-card" data-value="Elektronisch">🎧 Elektronisch</button>
+          </div>
+          <div class="custom-input-area">
+            <input type="text" class="custom-input" placeholder="Oder eigenen Stil eingeben..." autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button type="button" class="wizard-back-btn" id="wizard-back-btn" style="visibility: hidden;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Zurück
+        </button>
+        <span class="wizard-step-indicator" id="wizard-step-indicator">Schritt 1 von 5</span>
+        <button type="button" class="wizard-next-btn" id="wizard-next-btn" disabled>
+          Weiter
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="lyrics-generating" id="lyrics-generating" style="display:none;">
+        <div class="spinner"></div>
+        <span>Lyrics werden erstellt...</span>
       </div>
     </section>
 
-    <!-- Right: Info Panel -->
     <aside class="info-panel">
-      <!-- Credits -->
-      <div class="panel-card credits-card">
-        <h3>Song-Guthaben</h3>
-        <div class="credits-count" id="credits-count">–</div>
-        <div class="credits-label">Songs verfügbar</div>
-      </div>
-
-      <!-- Lyrics -->
       <div class="panel-card lyrics-card">
         <h3>Lyrics</h3>
-        <div class="lyrics-content" id="lyrics-content">
+        <div class="lyrics-content" id="lyrics-content" role="region" aria-label="Songtext">
           <p class="placeholder">Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
         </div>
       </div>
 
-      <!-- Player -->
-      <div class="panel-card player-card">
-        <button class="generate-btn" id="generate-btn" disabled>Song generieren</button>
+      <div class="panel-card player-card-sticky">
+        <button type="button" class="generate-btn" id="generate-btn" disabled>Song generieren</button>
         <div class="progress-bar" id="progress">
           <div class="spinner"></div>
           <span>Song wird generiert...</span>
         </div>
-        <audio id="audio-player" controls></audio>
+        
+        <!-- Song Success Box -->
+        <div class="song-success-box" id="song-success-box" style="display:none;">
+          <div class="success-header">
+            <div class="success-icon">🎉</div>
+            <div class="success-text">
+              <h4>Dein Song ist fertig!</h4>
+              <p>Hör ihn dir jetzt an</p>
+            </div>
+          </div>
+          <div class="custom-audio-player" id="custom-audio-player">
+            <button type="button" class="play-pause-btn" id="play-pause-btn">
+              <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <svg class="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            </button>
+            <div class="audio-progress-container">
+              <div class="audio-progress-bar" id="audio-progress-bar">
+                <div class="audio-progress-fill" id="audio-progress-fill"></div>
+              </div>
+              <div class="audio-time">
+                <span id="audio-current-time">0:00</span>
+                <span id="audio-duration">0:00</span>
+              </div>
+            </div>
+          </div>
+          <audio id="audio-player" style="display:none;"></audio>
+        </div>
       </div>
     </aside>
   </main>
+
+  <!-- Profile Page -->
+  <main class="profile-page" id="profile-page" style="display:none;">
+    <div class="profile-container">
+      <section class="profile-header">
+        <div class="profile-avatar">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h1 id="profile-name"></h1>
+        <p id="profile-email"></p>
+      </section>
+
+      <section class="profile-section">
+        <h2>Account Verwaltung</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <h3>Name</h3>
+              <p id="current-name">–</p>
+            </div>
+            <button type="button" class="edit-btn" id="edit-name-btn">Bearbeiten</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h3>E-Mail</h3>
+              <p id="current-email">–</p>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h3>Verfügbare Song-Credits</h3>
+              <p><span id="profile-credits">–</span> Songs</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h2>Statistiken</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <h3 id="profile-total-songs">0</h3>
+            <p>Songs erstellt</p>
+          </div>
+          <div class="stat-item">
+            <h3 id="profile-member-since">–</h3>
+            <p>Mitglied seit</p>
+          </div>
+        </div>
+      </section>
+
+            <section class="profile-section">
+        <h2>Credits kaufen</h2>
+        <div class="credits-card">
+          <div>
+            <h3>Mehr Songs erstellen</h3>
+            <p>Stocke dein Song-Guthaben auf und erstelle neue Songs ohne Wartezeit.</p>
+          </div>
+          <a href="/checkout.html" class="primary-btn">Credits kaufen</a>
+        </div>
+      </section>
+
+<section class="profile-section">
+        <h2>Passwort ändern</h2>
+        <div class="settings-card">
+          <form id="password-form">
+            <div class="form-group">
+              <label for="current-password">Aktuelles Passwort</label>
+              <input type="password" id="current-password" required autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label for="new-password">Neues Passwort (mind. 8 Zeichen)</label>
+              <input type="password" id="new-password" required minlength="8" autocomplete="new-password">
+            </div>
+            <button type="submit" class="submit-btn">Passwort aktualisieren</button>
+            <div class="form-message" id="password-message"></div>
+          </form>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h2>Danger Zone</h2>
+        <div class="danger-card">
+          <p class="danger-warning">Das Löschen deines Accounts kann nicht rückgängig gemacht werden. Alle deine Songs und Daten werden dauerhaft gelöscht.</p>
+          <button type="button" class="danger-btn" id="delete-account-btn">Account löschen</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Edit Name Modal -->
+  <div class="modal" id="edit-name-modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>Name bearbeiten</h2>
+      <form id="edit-name-form">
+        <div class="form-group">
+          <label for="new-name">Neuer Name</label>
+          <input type="text" id="new-name" required minlength="2">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" id="cancel-edit-name">Abbrechen</button>
+          <button type="submit" class="submit-btn">Speichern</button>
+        </div>
+        <div class="form-message" id="edit-name-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal -->
+  <div class="modal" id="delete-account-modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>Account löschen</h2>
+      <p class="warning-text">Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden!</p>
+      <form id="delete-account-form">
+        <div class="form-group">
+          <label for="delete-password">Passwort bestätigen</label>
+          <input type="password" id="delete-password" required autocomplete="current-password">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" id="cancel-delete-account">Abbrechen</button>
+          <button type="submit" class="danger-btn">Endgültig löschen</button>
+        </div>
+        <div class="form-message" id="delete-account-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display:none;">
+    <div class="loading-spinner"></div>
+    <p id="loading-text">Lädt...</p>
+  </div>
 
   <script src="js/app.js" type="module"></script>
 </body>
