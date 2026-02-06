@@ -2,6 +2,7 @@
 let currentUser = null;
 let pendingLyrics = null;
 let pendingStyle = null;
+let songDetailReturnView = "home";
 
 // ===== Wizard State =====
 const WIZARD_STEPS = [
@@ -21,6 +22,10 @@ let generationTimer = null;
 let generationStartedAt = null;
 let lastProgressMessage = "Song wird generiert...";
 let lastProgressPercent = 0;
+const songListProgressStartTimes = new Map();
+const songListProgressPercents = new Map();
+let songListProgressTimer = null;
+let activeGenerationSongId = null;
 
 // ===== Details Examples (rotating) =====
 const DETAILS_EXAMPLES = [
@@ -47,6 +52,13 @@ const homeSongsGrid = document.getElementById("home-songs-grid");
 const homeSongsEmpty = document.getElementById("home-songs-empty");
 const allSongsGrid = document.getElementById("all-songs-grid");
 const allSongsEmpty = document.getElementById("all-songs-empty");
+const songDetailPage = document.getElementById("song-detail-page");
+const songDetailTitle = document.getElementById("song-detail-title");
+const songDetailMeta = document.getElementById("song-detail-meta");
+const songDetailLyrics = document.getElementById("song-detail-lyrics");
+const songDetailAudio = document.getElementById("song-detail-audio");
+const songDetailStatus = document.getElementById("song-detail-status");
+const backToSongsBtn = document.getElementById("back-to-songs-btn");
 const creditsCount = document.getElementById("credits-count");
 const lyricsContent = document.getElementById("lyrics-content");
 const generateBtn = document.getElementById("generate-btn");
@@ -109,6 +121,38 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
+function formatLyrics(text) {
+  const tagRe = /\[(verse|chorus|bridge|outro|intro)\]/i;
+  let raw = (text || "").trim();
+
+  if (tagRe.test(raw)) {
+    const lines = raw.split("\n");
+    const lyricLines = [];
+    let inLyrics = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (tagRe.test(lines[i])) {
+        inLyrics = true;
+      }
+      if (inLyrics) {
+        lyricLines.push(lines[i]);
+      }
+    }
+
+    if (lyricLines.length > 0) {
+      raw = lyricLines.join("\n").trim();
+    }
+  }
+
+  const escaped = escapeHtml(raw);
+  const html = escaped.replace(
+    /\[(verse|chorus|bridge|outro|intro)\]/gi,
+    (_, tag) => `<span class="tag">[${tag}]</span>`
+  );
+
+  return { raw, html };
+}
+
 function formatDuration(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -128,8 +172,8 @@ function updateGenerationProgress() {
   }
 }
 
-function startGenerationTimer() {
-  generationStartedAt = Date.now();
+function startGenerationTimer(startTime) {
+  generationStartedAt = Number.isFinite(startTime) ? startTime : Date.now();
   updateGenerationProgress();
   if (generationTimer) clearInterval(generationTimer);
   generationTimer = setInterval(updateGenerationProgress, 1000);
@@ -143,6 +187,105 @@ function stopGenerationTimer() {
   generationStartedAt = null;
   lastProgressMessage = "Song wird generiert...";
   lastProgressPercent = 0;
+}
+
+function ensureSongListProgressState(song) {
+  const songId = Number(song?.id);
+  if (!Number.isFinite(songId)) return;
+  if (!songListProgressStartTimes.has(songId)) {
+    const createdAt = Number(song?.created_at);
+    const startTime = Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now();
+    songListProgressStartTimes.set(songId, startTime);
+  }
+}
+
+function getSongListProgressMeta(songId) {
+  const key = Number(songId);
+  if (!Number.isFinite(key)) return "";
+  const startTime = songListProgressStartTimes.get(key) || Date.now();
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+  const percentFromEvent = songListProgressPercents.get(key);
+  const percent = Number.isFinite(percentFromEvent) && percentFromEvent > 0
+    ? Math.min(99, Math.round(percentFromEvent))
+    : Math.min(99, Math.round((elapsedSec / GENERATION_ESTIMATE_SEC) * 100));
+  return `${formatDuration(elapsedSec)} / ~${formatDuration(GENERATION_ESTIMATE_SEC)} | ${percent}%`;
+}
+
+function updateSongListProgressCards() {
+  const cards = document.querySelectorAll(".song-generating[data-song-id]");
+  if (!cards.length) {
+    if (songListProgressTimer) {
+      clearInterval(songListProgressTimer);
+      songListProgressTimer = null;
+    }
+    return;
+  }
+
+  cards.forEach(card => {
+    const songId = Number(card.dataset.songId);
+    if (!Number.isFinite(songId)) return;
+    const metaEl = card.querySelector(".song-progress-meta");
+    if (metaEl) {
+      metaEl.textContent = getSongListProgressMeta(songId);
+    }
+  });
+}
+
+function startSongListProgressTimer() {
+  if (songListProgressTimer) return;
+  songListProgressTimer = setInterval(updateSongListProgressCards, 1000);
+  updateSongListProgressCards();
+}
+
+function syncSongListProgressState(songs) {
+  const activeIds = new Set(
+    (songs || [])
+      .filter(song => song.status === "generating" || song.status === "pending")
+      .map(song => Number(song.id))
+      .filter((id) => Number.isFinite(id))
+  );
+
+  for (const key of songListProgressStartTimes.keys()) {
+    if (!activeIds.has(key)) {
+      songListProgressStartTimes.delete(key);
+      songListProgressPercents.delete(key);
+    }
+  }
+
+  if (activeIds.size > 0) {
+    startSongListProgressTimer();
+  } else if (songListProgressTimer) {
+    clearInterval(songListProgressTimer);
+    songListProgressTimer = null;
+  }
+}
+
+function syncCreateGenerationState(songs) {
+  const active = (songs || []).find(song => song.status === "generating" || song.status === "pending");
+  if (!active) {
+    activeGenerationSongId = null;
+    if (progressBar) progressBar.style.display = "none";
+    stopGenerationTimer();
+    return;
+  }
+
+  activeGenerationSongId = Number(active.id);
+  if (progressBar) progressBar.style.display = "flex";
+  lastProgressMessage = "Song wird generiert...";
+  lastProgressPercent = songListProgressPercents.get(activeGenerationSongId) || 0;
+  startGenerationTimer(Number(active.created_at));
+}
+
+async function refreshCreateGenerationState() {
+  try {
+    const res = await fetch("/api/songs");
+    if (!res.ok) return;
+    const songs = await res.json();
+    syncSongListProgressState(songs);
+    syncCreateGenerationState(songs);
+  } catch {
+    // Ignore refresh errors
+  }
 }
 
 // ===== Rotating Examples for Details =====
@@ -227,6 +370,14 @@ function formatTimestamp(ts) {
   return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 }
 
+function formatSongDate(ts) {
+  return new Date(ts).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
+
 // ===== Tab Navigation =====
 function switchTab(tab) {
   tabBtns.forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
@@ -234,6 +385,7 @@ function switchTab(tab) {
   // Hide all pages
   homePage.style.display = "none";
   allSongsPage.style.display = "none";
+  if (songDetailPage) songDetailPage.style.display = "none";
   createPage.style.display = "none";
   profilePage.style.display = "none";
 
@@ -242,6 +394,7 @@ function switchTab(tab) {
     loadSongs();
   } else if (tab === "create") {
     createPage.style.display = "flex";
+    refreshCreateGenerationState();
   } else if (tab === "profile") {
     profilePage.style.display = "";
     loadProfile();
@@ -322,6 +475,9 @@ async function loadSongs() {
       const completedCount = songs.filter(s => s.status === "completed").length;
       totalSongsEl.textContent = completedCount;
     }
+
+    syncSongListProgressState(songs);
+    syncCreateGenerationState(songs);
   } catch {
     homeSongsGrid.innerHTML = '<p class="songs-error">Fehler beim Laden der Songs</p>';
   }
@@ -349,7 +505,16 @@ function renderSongCard(song, showActions = false) {
   if (song.status === "completed" && song.file_path) {
     playerHtml = `<audio controls preload="none" src="/${song.file_path}"></audio>`;
   } else if (song.status === "generating" || song.status === "pending") {
-    playerHtml = `<div class="song-generating"><div class="spinner"></div><span>${statusLabel[song.status]}</span></div>`;
+    ensureSongListProgressState(song);
+    const progressMeta = getSongListProgressMeta(song.id);
+    playerHtml = `
+      <div class="song-generating" data-song-id="${song.id}">
+        <div class="spinner"></div>
+        <div class="song-progress-text">
+          <span class="song-progress-label">${statusLabel[song.status]}</span>
+          <span class="song-progress-meta">${progressMeta}</span>
+        </div>
+      </div>`;
   } else if (song.status === "failed") {
     let errorText = song.error_message || "";
     if (errorText.length > 90) errorText = errorText.slice(0, 87) + "...";
@@ -434,7 +599,62 @@ function renderSongCard(song, showActions = false) {
     }
   }
 
+  if (song.status === "completed") {
+    card.classList.add("clickable");
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("button, a, audio, .song-card-actions, .song-player")) {
+        return;
+      }
+      openSongDetail(song);
+    });
+  }
+
   return card;
+}
+
+function openSongDetail(song) {
+  if (!songDetailPage) return;
+
+  songDetailReturnView = allSongsPage.style.display !== "none" ? "all" : "home";
+
+  homePage.style.display = "none";
+  allSongsPage.style.display = "none";
+  createPage.style.display = "none";
+  profilePage.style.display = "none";
+  songDetailPage.style.display = "";
+
+  if (songDetailTitle) songDetailTitle.textContent = "Song Details";
+
+  const dateText = song.created_at ? formatSongDate(song.created_at) : "";
+  const styleText = song.style || "Unbekannter Stil";
+  if (songDetailMeta) {
+    songDetailMeta.textContent = dateText ? `${dateText} · ${styleText}` : styleText;
+  }
+
+  if (songDetailLyrics) {
+    const { html } = formatLyrics(song.lyrics || "");
+    songDetailLyrics.classList.remove("has-lyrics");
+    songDetailLyrics.innerHTML = html || "<p class=\"placeholder\">Keine Lyrics verfügbar.</p>";
+    requestAnimationFrame(() => {
+      songDetailLyrics.classList.add("has-lyrics");
+    });
+    songDetailLyrics.scrollTop = 0;
+  }
+
+  if (songDetailAudio) {
+    if (song.status === "completed" && song.file_path) {
+      songDetailAudio.src = "/" + song.file_path;
+      songDetailAudio.style.display = "block";
+      songDetailAudio.load();
+      if (songDetailStatus) songDetailStatus.textContent = "";
+    } else {
+      songDetailAudio.removeAttribute("src");
+      songDetailAudio.style.display = "none";
+      if (songDetailStatus) {
+        songDetailStatus.textContent = "Audio ist noch nicht verfügbar.";
+      }
+    }
+  }
 }
 
 // ===== All Songs Page =====
@@ -448,6 +668,18 @@ if (backToHomeBtn) {
   backToHomeBtn.addEventListener("click", () => {
     allSongsPage.style.display = "none";
     homePage.style.display = "";
+  });
+}
+
+if (backToSongsBtn) {
+  backToSongsBtn.addEventListener("click", () => {
+    if (songDetailPage) songDetailPage.style.display = "none";
+    if (songDetailReturnView === "all") {
+      showAllSongs();
+    } else {
+      homePage.style.display = "";
+      loadSongs();
+    }
   });
 }
 
@@ -473,6 +705,9 @@ async function showAllSongs() {
         allSongsGrid.appendChild(renderSongCard(song, true));
       }
     }
+
+    syncSongListProgressState(songs);
+    syncCreateGenerationState(songs);
   } catch {
     allSongsGrid.innerHTML = '<p class="songs-error">Fehler beim Laden der Songs</p>';
     hideLoading();
@@ -851,42 +1086,13 @@ resetWizardBtn.addEventListener("click", () => {
 
 // ===== Lyrics Display =====
 function displayLyrics(text) {
-  const tagRe = /\[(verse|chorus|bridge|outro|intro)\]/i;
-
-  let raw = text.trim();
-
-  // Try to extract only the lyrics portion (after first tag)
-  if (tagRe.test(raw)) {
-    const lines = raw.split("\n");
-    const lyricLines = [];
-    let inLyrics = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      if (tagRe.test(lines[i])) {
-        inLyrics = true;
-      }
-      if (inLyrics) {
-        lyricLines.push(lines[i]);
-      }
-    }
-
-    if (lyricLines.length > 0) {
-      raw = lyricLines.join("\n").trim();
-    }
-  }
-
+  const { raw, html } = formatLyrics(text);
   pendingLyrics = raw;
-
-  const escaped = escapeHtml(raw);
-  const formatted = escaped.replace(
-    /\[(verse|chorus|bridge|outro|intro)\]/gi,
-    (_, tag) => `<span class="tag">[${tag}]</span>`
-  );
   
   // Add animation class
   lyricsContent.classList.remove("has-lyrics");
-  
-  lyricsContent.innerHTML = formatted;
+
+  lyricsContent.innerHTML = html;
 
   // Show action buttons
   if (lyricsActions) lyricsActions.style.display = "flex";
@@ -1014,6 +1220,13 @@ generateBtn.addEventListener("click", async () => {
     if (data.songCredits !== undefined) {
       creditsCount.textContent = data.songCredits;
     }
+
+    if (data.songId) {
+      activeGenerationSongId = Number(data.songId);
+      if (!songListProgressStartTimes.has(activeGenerationSongId)) {
+        songListProgressStartTimes.set(activeGenerationSongId, Date.now());
+      }
+    }
   } catch {
     progressBar.style.display = "none";
     generateBtn.disabled = false;
@@ -1028,11 +1241,16 @@ function setupSSE() {
 
   es.addEventListener("song_status", (e) => {
     const data = JSON.parse(e.data);
+    const songId = Number(data.songId);
 
-    if (data.status === "completed" && data.filePath) {
-      progressBar.style.display = "none";
-      stopGenerationTimer();
-      audioPlayer.src = "/" + data.filePath;
+    if (data.status === "completed") {
+      if (!activeGenerationSongId || activeGenerationSongId === songId) {
+        progressBar.style.display = "none";
+        stopGenerationTimer();
+      }
+      if (data.filePath) {
+        audioPlayer.src = "/" + data.filePath;
+      }
       
       // Show custom player with success animation
       if (songSuccessBox) {
@@ -1047,10 +1265,21 @@ function setupSSE() {
     }
 
     if (data.status === "failed") {
-      progressBar.style.display = "none";
-      generateBtn.disabled = false;
-      stopGenerationTimer();
+      if (!activeGenerationSongId || activeGenerationSongId === songId) {
+        progressBar.style.display = "none";
+        generateBtn.disabled = false;
+        stopGenerationTimer();
+      }
       showWizardError("Song-Generierung fehlgeschlagen: " + (data.error || "Unbekannter Fehler"));
+    }
+
+    if (Number.isFinite(songId) && (data.status === "completed" || data.status === "failed")) {
+      songListProgressStartTimes.delete(songId);
+      songListProgressPercents.delete(songId);
+      updateSongListProgressCards();
+      if (activeGenerationSongId === songId) {
+        activeGenerationSongId = null;
+      }
     }
   });
 
@@ -1060,6 +1289,23 @@ function setupSSE() {
     lastProgressPercent = data.percent || 0;
     lastProgressMessage = data.message || "Song wird generiert...";
     updateGenerationProgress();
+
+    const songId = Number(data.songId);
+    if (Number.isFinite(songId)) {
+      if (!songListProgressStartTimes.has(songId)) {
+        songListProgressStartTimes.set(songId, Date.now());
+      }
+      if (typeof data.percent === "number") {
+        songListProgressPercents.set(songId, data.percent);
+      }
+      updateSongListProgressCards();
+      startSongListProgressTimer();
+
+      if (activeGenerationSongId === songId) {
+        lastProgressPercent = data.percent || lastProgressPercent;
+        lastProgressMessage = data.message || lastProgressMessage;
+      }
+    }
   });
 
   es.addEventListener("credits_update", (e) => {

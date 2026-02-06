@@ -119,6 +119,37 @@
     </div>
   </main>
 
+  <!-- Song Detail Page -->
+  <main class="song-detail-page" id="song-detail-page" style="display:none;">
+    <div class="page-container">
+      <div class="page-header">
+        <div>
+          <h1 id="song-detail-title">Song Details</h1>
+          <p id="song-detail-meta"></p>
+        </div>
+        <button type="button" class="back-btn" id="back-to-songs-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Zurück
+        </button>
+      </div>
+
+      <div class="song-detail-grid">
+        <div class="panel-card song-detail-player">
+          <h3>Player</h3>
+          <audio id="song-detail-audio" controls preload="none"></audio>
+          <div class="song-detail-status" id="song-detail-status"></div>
+        </div>
+
+        <div class="panel-card song-detail-lyrics">
+          <h3>Lyrics</h3>
+          <div class="lyrics-content" id="song-detail-lyrics"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <!-- Create Page -->
   <main class="app-layout" id="create-page" style="display:none;">
     <section class="wizard-panel">
