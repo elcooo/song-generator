@@ -136,7 +136,9 @@ export function findUserByGoogleId(googleId) {
 }
 
 export function findUserById(id) {
-  return db.prepare("SELECT id, email, display_name, song_credits, is_admin, created_at, email_verified FROM users WHERE id = ?").get(id);
+  return db.prepare(
+    "SELECT id, email, password_hash, display_name, song_credits, is_admin, created_at, email_verified, provider, google_id FROM users WHERE id = ?"
+  ).get(id);
 }
 
 export function linkGoogleToUser(userId, googleId) {

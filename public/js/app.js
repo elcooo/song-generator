@@ -1042,6 +1042,7 @@ async function init() {
     const songsCreditsStatEl = document.getElementById("songs-credits-stat");
     if (songsCreditsStatEl) songsCreditsStatEl.textContent = currentUser.songCredits;
 
+    updateAccountSecurityUi();
     setupSSE();
     await loadSongs();
     hideLoading();
@@ -1901,6 +1902,33 @@ function setupSSE() {
   };
 }
 
+function updateAccountSecurityUi() {
+  const provider = currentUser?.provider || "local";
+  const isLocal = provider === "local";
+
+  if (passwordForm) {
+    const passwordSection = passwordForm.closest(".profile-section");
+    if (passwordSection) {
+      passwordSection.style.display = isLocal ? "" : "none";
+    }
+  }
+
+  if (deletePasswordInput) {
+    const group = deletePasswordInput.closest(".form-group");
+    if (group) {
+      group.style.display = isLocal ? "" : "none";
+    }
+    deletePasswordInput.required = isLocal;
+  }
+
+  const warning = document.querySelector("#delete-account-modal .warning-text");
+  if (warning) {
+    warning.textContent = isLocal
+      ? "Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden!"
+      : "Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden! Für Social-Login ist kein Passwort erforderlich.";
+  }
+}
+
 // ===== Profile Page =====
 async function loadProfile() {
   if (!currentUser) return;
@@ -2093,7 +2121,14 @@ if (cancelDeleteAccount) {
 if (deleteAccountForm) {
   deleteAccountForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const password = deletePasswordInput.value;
+    const password = deletePasswordInput ? deletePasswordInput.value : "";
+    const isLocal = (currentUser?.provider || "local") === "local";
+
+    if (isLocal && !password) {
+      deleteAccountMessage.textContent = "Passwort erforderlich";
+      deleteAccountMessage.className = "form-message error";
+      return;
+    }
 
     if (!confirm("Letzte Warnung: Bist du absolut sicher? Alle Daten werden unwiderruflich gelöscht!")) {
       return;

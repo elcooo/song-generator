@@ -1625,6 +1625,10 @@
   box-shadow: var(--shadow-soft);
 }
 
+.settings-card form {
+  padding: 24px 28px 28px;
+}
+
 .setting-row {
   display: flex;
   justify-content: space-between;

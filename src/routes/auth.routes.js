@@ -349,6 +349,7 @@ router.get("/api/me", requireAuth, (req, res) => {
     songCredits: user.song_credits,
     isAdmin: !!user.is_admin,
     created_at: user.created_at,
+    provider: user.provider || "local",
   });
 });
 
@@ -402,16 +403,19 @@ router.patch("/api/me/password", requireAuth, async (req, res) => {
 
 router.delete("/api/me", requireAuth, async (req, res) => {
   const { password } = req.body;
-  if (!password) {
-    return res.status(400).json({ error: "Passwort erforderlich" });
-  }
   
   try {
     const user = findUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Nutzer nicht gefunden" });
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-      return res.status(401).json({ error: "Passwort ist falsch" });
+    const isLocalUser = (user.provider || "local") === "local";
+    if (isLocalUser) {
+      if (!password) {
+        return res.status(400).json({ error: "Passwort erforderlich" });
+      }
+      const match = await bcrypt.compare(password, user.password_hash);
+      if (!match) {
+        return res.status(401).json({ error: "Passwort ist falsch" });
+      }
     }
     
     const userId = req.session.userId;
