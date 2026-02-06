@@ -1,7 +1,9 @@
 const noticeEl = document.getElementById("checkout-notice");
 const checkoutBtn = document.getElementById("checkout-btn");
 const priceLabelEl = document.getElementById("price-label");
+const priceBadgeEl = document.getElementById("price-badge");
 const priceAmountEl = document.getElementById("price-amount");
+const priceSubEl = document.getElementById("price-sub");
 const priceMetaEl = document.getElementById("price-meta");
 
 function showNotice(message, type = "success") {
@@ -38,12 +40,17 @@ async function loadConfig() {
   const data = await res.json();
 
   if (!data.enabled) {
-    priceAmountEl.textContent = "Stripe ist aktuell nicht verfügbar.";
+    priceAmountEl.textContent = "Stripe ist aktuell nicht verf??gbar.";
     if (checkoutBtn) checkoutBtn.disabled = true;
     return;
   }
 
   if (priceLabelEl && data.priceLabel) priceLabelEl.textContent = data.priceLabel;
+
+  if (priceBadgeEl && data.credits) {
+    const label = data.credits === 1 ? "1 Song" : `${data.credits} Songs`;
+    priceBadgeEl.textContent = label;
+  }
 
   if (data.unitAmount && data.currency) {
     priceAmountEl.textContent = formatPrice(data.unitAmount, data.currency);
@@ -51,8 +58,12 @@ async function loadConfig() {
     priceAmountEl.textContent = "Preis wird bei Stripe angezeigt";
   }
 
+  if (priceSubEl) {
+    priceSubEl.textContent = "Einmalige Zahlung";
+  }
+
   if (priceMetaEl && data.credits) {
-    priceMetaEl.textContent = `${data.credits} Credits werden nach Zahlung gutgeschrieben.`;
+    priceMetaEl.textContent = `${data.credits} Songs werden nach Zahlung gutgeschrieben.`;
   }
 }
 
@@ -81,7 +92,7 @@ async function startCheckout() {
 (async function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("success")) {
-    showNotice("Zahlung erfolgreich! Credits werden in Kürze gutgeschrieben.", "success");
+    showNotice("Zahlung erfolgreich! Credits werden in K??rze gutgeschrieben.", "success");
   }
   if (params.get("canceled")) {
     showNotice("Zahlung abgebrochen. Du kannst es jederzeit erneut versuchen.", "error");
