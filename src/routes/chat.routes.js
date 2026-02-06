@@ -1,7 +1,7 @@
 ﻿import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { wizardLimiter, trialLimiter } from "../middleware/rateLimiters.js";
-import { generateFromWizard } from "../chat.js";
+import { generateFromWizard, editLyrics } from "../chat.js";
 import { getSongCredits } from "../db.js";
 import { LIMITS, requireText, optionalText } from "../utils/validation.js";
 
@@ -45,6 +45,37 @@ router.post("/api/wizard", requireAuth, wizardLimiter, async (req, res) => {
   } catch (err) {
     console.error("Wizard error:", err?.message || err);
     res.status(500).json({ error: "Lyrics-Generierung fehlgeschlagen" });
+  } finally {
+    processingFor.delete(userId);
+  }
+});
+
+// Edit lyrics with AI prompt
+router.post("/api/lyrics/edit", requireAuth, wizardLimiter, async (req, res) => {
+  const userId = req.session.userId;
+  const { lyrics, prompt, style } = req.body;
+
+  if (!lyrics || !prompt) {
+    return res.status(400).json({ error: "Lyrics und Anweisung erforderlich" });
+  }
+  if (lyrics.length > 8000) {
+    return res.status(400).json({ error: "Lyrics sind zu lang" });
+  }
+  if (prompt.length > 500) {
+    return res.status(400).json({ error: "Anweisung ist zu lang (max. 500 Zeichen)" });
+  }
+
+  if (processingFor.has(userId)) {
+    return res.status(429).json({ error: "Bitte warte auf die vorherige Antwort" });
+  }
+
+  processingFor.add(userId);
+  try {
+    const result = await editLyrics(lyrics, prompt, style);
+    res.json(result);
+  } catch (err) {
+    console.error("Lyrics edit error:", err?.message || err);
+    res.status(500).json({ error: "Lyrics-Bearbeitung fehlgeschlagen" });
   } finally {
     processingFor.delete(userId);
   }

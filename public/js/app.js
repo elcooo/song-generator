@@ -57,6 +57,15 @@ const audioProgressFill = document.getElementById("audio-progress-fill");
 const audioCurrentTime = document.getElementById("audio-current-time");
 const audioDuration = document.getElementById("audio-duration");
 let audioPlayerInitialized = false;
+const lyricsActions = document.getElementById("lyrics-actions");
+const editLyricsBtn = document.getElementById("edit-lyrics-btn");
+const saveLyricsBtn = document.getElementById("save-lyrics-btn");
+const cancelLyricsBtn = document.getElementById("cancel-lyrics-btn");
+const lyricsEditor = document.getElementById("lyrics-editor");
+const lyricsAiBox = document.getElementById("lyrics-ai-box");
+const lyricsAiInput = document.getElementById("lyrics-ai-input");
+const lyricsAiBtn = document.getElementById("lyrics-ai-btn");
+const lyricsAiStatus = document.getElementById("lyrics-ai-status");
 const adminLink = document.getElementById("admin-link");
 const logoBtn = document.getElementById("logo-btn");
 const userNameEl = document.getElementById("user-name");
@@ -674,7 +683,11 @@ function resetWizard() {
   pendingStyle = null;
   generateBtn.disabled = true;
   lyricsContent.innerHTML = '<p class="placeholder">Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>';
-  
+  if (lyricsActions) lyricsActions.style.display = "none";
+  if (lyricsAiBox) lyricsAiBox.style.display = "none";
+  if (lyricsEditor) lyricsEditor.style.display = "none";
+  if (lyricsContent) lyricsContent.style.display = "block";
+
   // Hide custom player
   if (songSuccessBox) songSuccessBox.style.display = "none";
   progressBar.style.display = "none";
@@ -833,11 +846,95 @@ function displayLyrics(text) {
   lyricsContent.classList.remove("has-lyrics");
   
   lyricsContent.innerHTML = formatted;
-  
+
+  // Show action buttons
+  if (lyricsActions) lyricsActions.style.display = "flex";
+  if (lyricsAiBox) lyricsAiBox.style.display = "flex";
+  exitEditMode();
+
   // Trigger animation
   requestAnimationFrame(() => {
     lyricsContent.classList.add("has-lyrics");
   });
+}
+
+// ===== Lyrics Editing =====
+function enterEditMode() {
+  if (!pendingLyrics) return;
+  lyricsEditor.value = pendingLyrics;
+  lyricsContent.style.display = "none";
+  lyricsEditor.style.display = "block";
+  editLyricsBtn.style.display = "none";
+  saveLyricsBtn.style.display = "inline-flex";
+  cancelLyricsBtn.style.display = "inline-flex";
+  lyricsEditor.focus();
+}
+
+function exitEditMode() {
+  lyricsEditor.style.display = "none";
+  lyricsContent.style.display = "block";
+  editLyricsBtn.style.display = "inline-flex";
+  saveLyricsBtn.style.display = "none";
+  cancelLyricsBtn.style.display = "none";
+}
+
+function saveManualEdits() {
+  const edited = lyricsEditor.value.trim();
+  if (edited) {
+    displayLyrics(edited);
+  }
+  exitEditMode();
+}
+
+if (editLyricsBtn) editLyricsBtn.addEventListener("click", enterEditMode);
+if (cancelLyricsBtn) cancelLyricsBtn.addEventListener("click", () => { exitEditMode(); });
+if (saveLyricsBtn) saveLyricsBtn.addEventListener("click", saveManualEdits);
+
+// AI lyrics editing
+if (lyricsAiBtn) {
+  lyricsAiBtn.addEventListener("click", requestAiEdit);
+}
+if (lyricsAiInput) {
+  lyricsAiInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") requestAiEdit();
+  });
+}
+
+async function requestAiEdit() {
+  const prompt = lyricsAiInput.value.trim();
+  if (!prompt || !pendingLyrics) return;
+
+  lyricsAiBtn.disabled = true;
+  lyricsAiInput.disabled = true;
+  lyricsAiStatus.textContent = "AI bearbeitet Lyrics...";
+  lyricsAiStatus.className = "lyrics-ai-status loading";
+
+  try {
+    const res = await fetch("/api/lyrics/edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lyrics: pendingLyrics, prompt, style: pendingStyle }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      lyricsAiStatus.textContent = data.error || "Bearbeitung fehlgeschlagen";
+      lyricsAiStatus.className = "lyrics-ai-status error";
+      return;
+    }
+
+    displayLyrics(data.lyrics);
+    lyricsAiInput.value = "";
+    lyricsAiStatus.textContent = "Lyrics aktualisiert!";
+    lyricsAiStatus.className = "lyrics-ai-status success";
+    setTimeout(() => { lyricsAiStatus.textContent = ""; }, 3000);
+  } catch {
+    lyricsAiStatus.textContent = "Verbindungsfehler";
+    lyricsAiStatus.className = "lyrics-ai-status error";
+  } finally {
+    lyricsAiBtn.disabled = false;
+    lyricsAiInput.disabled = false;
+  }
 }
 
 // ===== Song Generation =====

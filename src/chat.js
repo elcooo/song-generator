@@ -97,3 +97,26 @@ Schreibe jetzt die Lyrics:`;
     content: content.trim(),
   };
 }
+
+/**
+ * Edit existing lyrics based on a user prompt.
+ * Returns { lyrics }
+ */
+export async function editLyrics(currentLyrics, prompt, style) {
+  const response = await openai.chat.completions.create({
+    model: "gpt-5.2",
+    messages: [
+      { role: "developer", content: WIZARD_SYSTEM_PROMPT },
+      { role: "user", content: `Hier sind die aktuellen Lyrics:\n\n${currentLyrics}` },
+      { role: "assistant", content: currentLyrics },
+      { role: "user", content: `Bitte bearbeite die Lyrics nach dieser Anweisung: ${prompt}\n\nMusikstil: ${style || "wie bisher"}\n\nGib die kompletten, bearbeiteten Lyrics aus. Behalte das gleiche Format mit Section-Tags, Backing Vocals und Ad-libs bei.` },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("Keine Antwort vom AI erhalten");
+  }
+
+  return { lyrics: content.trim() };
+}
