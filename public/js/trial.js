@@ -23,21 +23,535 @@ const WIZARD_STEPS = [
 let wizardData = { language: "", occasion: "", recipient: "", name: "", details: "", style: "" };
 let currentStep = 0;
 
-// ===== Details Examples (rotating) =====
-const DETAILS_EXAMPLES = [
-  "Sie liebt Wandern und die Natur, wir kennen uns seit 10 Jahren...",
-  "Er ist der beste Papa der Welt, immer für uns da...",
-  "Sie hat das schönste Lächeln und liebt Musik über alles...",
-  "Wir haben uns in der Schule kennengelernt, seitdem unzertrennlich...",
-  "Er kocht leidenschaftlich gern und macht die besten Pasta...",
-  "Sie tanzt gern und hört am liebsten 80er Musik...",
-  "Er ist ein Fußball-Fan und geht jedes Wochenende zum Spiel...",
-  "Sie liebt Katzen und hat drei davon zu Hause...",
-  "Wir haben so viel zusammen erlebt, Reisen, Abenteuer...",
-  "Er arbeitet hart für die Familie und verdient Anerkennung...",
-  "Sie ist meine beste Freundin seit der Kindergartenzeit...",
-  "Er hat einen tollen Humor und bringt alle zum Lachen...",
-];
+// ===== UI Localization =====
+const UI_TEXT = {
+  de: {
+    wizardTitle: "Neuer Song",
+    resetLabel: "Neu starten",
+    steps: {
+      language: "Sprache",
+      occasion: "Anlass",
+      recipient: "Für wen",
+      name: "Name",
+      details: "Details",
+      style: "Stil",
+    },
+    titles: {
+      language: "Welche Sprache soll der Song haben?",
+      occasion: "Wähle den Anlass",
+      recipient: "Für wen ist der Song?",
+      name: "Wie heißt die Person?",
+      details: "Persönliche Details",
+      style: "Wähle den Musikstil",
+    },
+    descriptions: {
+      language: "Wähle die Sprache für deinen Songtext.",
+      occasion: "Für welchen Anlass soll der Song sein?",
+      recipient: "Wer soll mit dem Song überrascht werden?",
+      name: "Der Name wird im Song verwendet.",
+      details: "Erzähle etwas über die Person oder den Anlass. Je mehr Details, desto persönlicher der Song. (Optional)",
+      style: "Welcher Stil passt am besten?",
+    },
+    placeholders: {
+      occasion: "Oder eigenen Anlass eingeben...",
+      recipient: "Oder eigene Angabe eingeben...",
+      name: "z.B. Maria, Tom, Mama...",
+      details: "",
+      style: "Oder eigenen Stil eingeben...",
+      lyricsAi: "z.B. Mach den Chorus emotionaler...",
+    },
+    detailsExampleLabel: "💡 Beispiel:",
+    nav: {
+      back: "Zurück",
+      next: "Weiter",
+      generateLyrics: "Lyrics erstellen",
+      stepIndicator: (step, total) => `Schritt ${step} von ${total}`,
+    },
+    lyricsGenerating: "Lyrics werden erstellt...",
+    lyricsHeader: "Lyrics",
+    lyricsPlaceholder: "Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.",
+    generateSong: "Song generieren",
+    songGenerating: "Song wird generiert...",
+    successTitle: "Dein Song ist fertig!",
+    successSubtitle: "Hör ihn dir jetzt an",
+    trialCtaTitle: "Gefällt dir dein Song?",
+    trialCtaSubtitle: "Registriere dich kostenlos, um ihn herunterzuladen und weitere Songs zu erstellen.",
+    trialCtaButton: "Kostenlos registrieren",
+  },
+  en: {
+    wizardTitle: "New Song",
+    resetLabel: "Restart",
+    steps: {
+      language: "Language",
+      occasion: "Occasion",
+      recipient: "Recipient",
+      name: "Name",
+      details: "Details",
+      style: "Style",
+    },
+    titles: {
+      language: "Which language should the song be?",
+      occasion: "Choose the occasion",
+      recipient: "Who is the song for?",
+      name: "What is their name?",
+      details: "Personal details",
+      style: "Choose the music style",
+    },
+    descriptions: {
+      language: "Choose the language for your lyrics.",
+      occasion: "What is the song for?",
+      recipient: "Who should be surprised by the song?",
+      name: "The name will appear in the song.",
+      details: "Tell us about the person or the occasion. More details make the song more personal. (Optional)",
+      style: "Which style fits best?",
+    },
+    placeholders: {
+      occasion: "Or enter a custom occasion...",
+      recipient: "Or enter a custom recipient...",
+      name: "e.g., Maria, Tom, Mom...",
+      details: "",
+      style: "Or enter a custom style...",
+      lyricsAi: "e.g., Make the chorus more emotional...",
+    },
+    detailsExampleLabel: "Example:",
+    nav: {
+      back: "Back",
+      next: "Next",
+      generateLyrics: "Generate Lyrics",
+      stepIndicator: (step, total) => `Step ${step} of ${total}`,
+    },
+    lyricsGenerating: "Creating lyrics...",
+    lyricsHeader: "Lyrics",
+    lyricsPlaceholder: "Your lyrics will appear here once the AI creates them.",
+    generateSong: "Generate Song",
+    songGenerating: "Generating song...",
+    successTitle: "Your song is ready!",
+    successSubtitle: "Listen to it now",
+    trialCtaTitle: "Do you like your song?",
+    trialCtaSubtitle: "Register for free to download it and create more songs.",
+    trialCtaButton: "Register for free",
+  },
+  ar: {
+    wizardTitle: "أغنية جديدة",
+    resetLabel: "إعادة البدء",
+    steps: {
+      language: "اللغة",
+      occasion: "المناسبة",
+      recipient: "لمن",
+      name: "الاسم",
+      details: "التفاصيل",
+      style: "الأسلوب",
+    },
+    titles: {
+      language: "ما لغة الأغنية؟",
+      occasion: "اختر المناسبة",
+      recipient: "لمن هذه الأغنية؟",
+      name: "ما اسم الشخص؟",
+      details: "تفاصيل شخصية",
+      style: "اختر الأسلوب الموسيقي",
+    },
+    descriptions: {
+      language: "اختر لغة كلمات الأغنية.",
+      occasion: "ما المناسبة التي تُكتب لها الأغنية؟",
+      recipient: "من الشخص الذي تريد مفاجأته؟",
+      name: "سيُذكر الاسم في الأغنية.",
+      details: "أخبرنا عن الشخص أو المناسبة. كلما زادت التفاصيل أصبحت الأغنية أكثر خصوصية. (اختياري)",
+      style: "أي أسلوب هو الأنسب؟",
+    },
+    placeholders: {
+      occasion: "أو اكتب مناسبة مختلفة...",
+      recipient: "أو اكتب لمن تكون الأغنية...",
+      name: "مثال: ماريا، توم، أمي...",
+      details: "",
+      style: "أو اكتب أسلوبًا مختلفًا...",
+      lyricsAi: "مثال: اجعل اللازمة أكثر عاطفية...",
+    },
+    detailsExampleLabel: "مثال:",
+    nav: {
+      back: "رجوع",
+      next: "التالي",
+      generateLyrics: "إنشاء الكلمات",
+      stepIndicator: (step, total) => `الخطوة ${step} من ${total}`,
+    },
+    lyricsGenerating: "جارٍ إنشاء الكلمات...",
+    lyricsHeader: "الكلمات",
+    lyricsPlaceholder: "ستظهر الكلمات هنا بعد أن ينشئها الذكاء الاصطناعي.",
+    generateSong: "إنشاء الأغنية",
+    songGenerating: "جارٍ إنشاء الأغنية...",
+    successTitle: "أغنيتك جاهزة!",
+    successSubtitle: "استمع إليها الآن",
+    trialCtaTitle: "هل أعجبتك أغنيتك؟",
+    trialCtaSubtitle: "سجل مجانًا لتحميلها وإنشاء المزيد من الأغاني.",
+    trialCtaButton: "سجل مجانًا",
+  },
+};
+
+const OPTION_SETS = {
+  occasion: {
+    de: [
+      { value: "Geburtstag", label: "Geburtstag", emoji: "🎂", suggestRecipient: "" },
+      { value: "Hochzeit", label: "Hochzeit", emoji: "💍", suggestRecipient: "Brautpaar" },
+      { value: "Jubiläum", label: "Jubiläum", emoji: "🎉", suggestRecipient: "" },
+      { value: "Valentinstag", label: "Valentinstag", emoji: "❤️", suggestRecipient: "Partner/in" },
+      { value: "Weihnachten", label: "Weihnachten", emoji: "🎄", suggestRecipient: "Familie" },
+      { value: "Muttertag", label: "Muttertag", emoji: "💐", suggestRecipient: "Mutter" },
+      { value: "Vatertag", label: "Vatertag", emoji: "👔", suggestRecipient: "Vater" },
+      { value: "Geburt", label: "Geburt", emoji: "👶", suggestRecipient: "Baby" },
+    ],
+    en: [
+      { value: "Birthday", label: "Birthday", emoji: "🎂", suggestRecipient: "" },
+      { value: "Wedding", label: "Wedding", emoji: "💍", suggestRecipient: "Couple" },
+      { value: "Anniversary", label: "Anniversary", emoji: "🎉", suggestRecipient: "" },
+      { value: "Valentine's Day", label: "Valentine's Day", emoji: "❤️", suggestRecipient: "Partner" },
+      { value: "Christmas", label: "Christmas", emoji: "🎄", suggestRecipient: "Family" },
+      { value: "Mother's Day", label: "Mother's Day", emoji: "💐", suggestRecipient: "Mother" },
+      { value: "Father's Day", label: "Father's Day", emoji: "👔", suggestRecipient: "Father" },
+      { value: "Birth", label: "Birth", emoji: "👶", suggestRecipient: "Baby" },
+    ],
+    ar: [
+      { value: "عيد ميلاد", label: "عيد ميلاد", emoji: "🎂", suggestRecipient: "" },
+      { value: "زفاف", label: "زفاف", emoji: "💍", suggestRecipient: "العروسان" },
+      { value: "ذكرى سنوية", label: "ذكرى سنوية", emoji: "🎉", suggestRecipient: "" },
+      { value: "عيد الحب", label: "عيد الحب", emoji: "❤️", suggestRecipient: "الشريك/الشريكة" },
+      { value: "عيد الميلاد", label: "عيد الميلاد", emoji: "🎄", suggestRecipient: "العائلة" },
+      { value: "عيد الأم", label: "عيد الأم", emoji: "💐", suggestRecipient: "الأم" },
+      { value: "عيد الأب", label: "عيد الأب", emoji: "👔", suggestRecipient: "الأب" },
+      { value: "ولادة", label: "ولادة", emoji: "👶", suggestRecipient: "رضيع" },
+    ],
+  },
+  recipient: {
+    de: [
+      { value: "Freund/in", label: "Freund/in", emoji: "👫" },
+      { value: "Partner/in", label: "Partner/in", emoji: "💑" },
+      { value: "Mutter", label: "Mutter", emoji: "👩" },
+      { value: "Vater", label: "Vater", emoji: "👨" },
+      { value: "Kind", label: "Kind", emoji: "👧" },
+      { value: "Baby", label: "Baby", emoji: "👶" },
+      { value: "Geschwister", label: "Geschwister", emoji: "👧👦" },
+      { value: "Großeltern", label: "Großeltern", emoji: "👴👵" },
+      { value: "Familie", label: "Familie", emoji: "👨‍👩‍👧‍👦" },
+      { value: "Brautpaar", label: "Brautpaar", emoji: "💍" },
+      { value: "Kollege/in", label: "Kollege/in", emoji: "💼" },
+      { value: "Gruppe", label: "Gruppe", emoji: "👥" },
+    ],
+    en: [
+      { value: "Friend", label: "Friend", emoji: "👫" },
+      { value: "Partner", label: "Partner", emoji: "💑" },
+      { value: "Mother", label: "Mother", emoji: "👩" },
+      { value: "Father", label: "Father", emoji: "👨" },
+      { value: "Child", label: "Child", emoji: "👧" },
+      { value: "Baby", label: "Baby", emoji: "👶" },
+      { value: "Siblings", label: "Siblings", emoji: "👧👦" },
+      { value: "Grandparents", label: "Grandparents", emoji: "👴👵" },
+      { value: "Family", label: "Family", emoji: "👨‍👩‍👧‍👦" },
+      { value: "Couple", label: "Couple", emoji: "💍" },
+      { value: "Colleague", label: "Colleague", emoji: "💼" },
+      { value: "Group", label: "Group", emoji: "👥" },
+    ],
+    ar: [
+      { value: "صديق/صديقة", label: "صديق/صديقة", emoji: "👫" },
+      { value: "الشريك/الشريكة", label: "الشريك/الشريكة", emoji: "💑" },
+      { value: "الأم", label: "الأم", emoji: "👩" },
+      { value: "الأب", label: "الأب", emoji: "👨" },
+      { value: "الطفل", label: "الطفل", emoji: "👧" },
+      { value: "رضيع", label: "رضيع", emoji: "👶" },
+      { value: "الأشقاء", label: "الأشقاء", emoji: "👧👦" },
+      { value: "الأجداد", label: "الأجداد", emoji: "👴👵" },
+      { value: "العائلة", label: "العائلة", emoji: "👨‍👩‍👧‍👦" },
+      { value: "العروسان", label: "العروسان", emoji: "💍" },
+      { value: "زميل/زميلة", label: "زميل/زميلة", emoji: "💼" },
+      { value: "مجموعة", label: "مجموعة", emoji: "👥" },
+    ],
+  },
+  style: {
+    de: [
+      { value: "Pop", label: "Pop", emoji: "🎵" },
+      { value: "Rock", label: "Rock", emoji: "🎸" },
+      { value: "Rap", label: "Rap", emoji: "🎤" },
+      { value: "Schlager", label: "Schlager", emoji: "🎺" },
+      { value: "Ballade", label: "Ballade", emoji: "🎹" },
+      { value: "Country", label: "Country", emoji: "🤠" },
+      { value: "Jazz", label: "Jazz", emoji: "🎷" },
+      { value: "Elektronisch", label: "Elektronisch", emoji: "🎧" },
+    ],
+    en: [
+      { value: "Pop", label: "Pop", emoji: "🎵" },
+      { value: "Rock", label: "Rock", emoji: "🎸" },
+      { value: "Rap", label: "Rap", emoji: "🎤" },
+      { value: "Schlager", label: "Schlager", emoji: "🎺" },
+      { value: "Ballad", label: "Ballad", emoji: "🎹" },
+      { value: "Country", label: "Country", emoji: "🤠" },
+      { value: "Jazz", label: "Jazz", emoji: "🎷" },
+      { value: "Electronic", label: "Electronic", emoji: "🎧" },
+    ],
+    ar: [
+      { value: "بوب", label: "بوب", emoji: "🎵" },
+      { value: "روك", label: "روك", emoji: "🎸" },
+      { value: "راب", label: "راب", emoji: "🎤" },
+      { value: "شلاجر", label: "شلاجر", emoji: "🎺" },
+      { value: "بالاد", label: "بالاد", emoji: "🎹" },
+      { value: "كانتري", label: "كانتري", emoji: "🤠" },
+      { value: "جاز", label: "جاز", emoji: "🎷" },
+      { value: "إلكتروني", label: "إلكتروني", emoji: "🎧" },
+    ],
+  },
+};
+
+const DETAILS_EXAMPLES = {
+  de: [
+    "Sie liebt Wandern und die Natur, wir kennen uns seit 10 Jahren...",
+    "Er ist der beste Papa der Welt, immer für uns da...",
+    "Sie hat das schönste Lächeln und liebt Musik über alles...",
+    "Wir haben uns in der Schule kennengelernt, seitdem unzertrennlich...",
+    "Er kocht leidenschaftlich gern und macht die besten Pasta...",
+    "Sie tanzt gern und hört am liebsten 80er Musik...",
+    "Er ist ein Fußball-Fan und geht jedes Wochenende zum Spiel...",
+    "Sie liebt Katzen und hat drei davon zu Hause...",
+    "Wir haben so viel zusammen erlebt, Reisen, Abenteuer...",
+    "Er arbeitet hart für die Familie und verdient Anerkennung...",
+    "Sie ist meine beste Freundin seit der Kindergartenzeit...",
+    "Er hat einen tollen Humor und bringt alle zum Lachen...",
+  ],
+  en: [
+    "She loves hiking and nature, we've known each other for 10 years...",
+    "He's the best dad in the world, always there for us...",
+    "She has the most beautiful smile and loves music more than anything...",
+    "We met at school and have been inseparable ever since...",
+    "He loves cooking and makes the best pasta...",
+    "She loves dancing and listens to 80s music...",
+    "He's a football fan and goes to the game every weekend...",
+    "She loves cats and has three at home...",
+    "We've been through so much together—travel, adventures...",
+    "He works hard for the family and deserves recognition...",
+    "She's been my best friend since kindergarten...",
+    "He has a great sense of humor and makes everyone laugh...",
+  ],
+  ar: [
+    "تحب المشي في الطبيعة ونعرف بعضنا منذ 10 سنوات...",
+    "إنه أفضل أب في العالم، دائمًا بجانبنا...",
+    "لديها أجمل ابتسامة وتحب الموسيقى كثيرًا...",
+    "تعرفنا في المدرسة ومنذ ذلك الحين ونحن لا نفترق...",
+    "يحب الطبخ ويُعد أفضل معكرونة...",
+    "تحب الرقص وتستمع كثيرًا إلى موسيقى الثمانينات...",
+    "إنه من عشاق كرة القدم ويذهب إلى المباراة كل عطلة...",
+    "تحب القطط ولديها ثلاث منها في المنزل...",
+    "عشنا الكثير معًا: سفر ومغامرات...",
+    "يعمل بجد من أجل العائلة ويستحق التقدير...",
+    "هي صديقتي المفضلة منذ الروضة...",
+    "لديه حس دعابة رائع ويجعل الجميع يضحك...",
+  ],
+};
+
+function resolveLanguage(value) {
+  const v = (value || "").toString().toLowerCase();
+  if (v.includes("english")) return "en";
+  if (v.includes("العربية") || v.includes("arab")) return "ar";
+  if (v.includes("deutsch")) return "de";
+  return "de";
+}
+
+function getLangCode() {
+  return resolveLanguage(wizardData.language);
+}
+
+function getUiText() {
+  return UI_TEXT[getLangCode()] || UI_TEXT.de;
+}
+
+function getDetailsExamples() {
+  return DETAILS_EXAMPLES[getLangCode()] || DETAILS_EXAMPLES.de;
+}
+
+function setButtonLabel(btn, label, iconPosition = "after") {
+  if (!btn) return;
+  const icon = btn.querySelector("svg");
+  if (!icon) {
+    btn.textContent = label;
+    return;
+  }
+  const iconHtml = icon.outerHTML;
+  btn.innerHTML = iconPosition === "before" ? `${iconHtml} ${label}` : `${label} ${iconHtml}`;
+}
+
+function updateOptionCards(stepIndex, options, isOccasion = false) {
+  const stepEl = document.querySelector(`.wizard-step[data-step="${stepIndex}"]`);
+  if (!stepEl) return;
+  const cards = stepEl.querySelectorAll(".option-card");
+  cards.forEach((card, idx) => {
+    const opt = options[idx];
+    if (!opt) return;
+    card.dataset.value = opt.value;
+    if (isOccasion) {
+      card.dataset.suggestRecipient = opt.suggestRecipient || "";
+    }
+    card.textContent = opt.emoji ? `${opt.emoji} ${opt.label}` : opt.label;
+  });
+  const selected = stepEl.querySelector(".option-card.selected");
+  if (selected) {
+    const stepKey = WIZARD_STEPS[stepIndex]?.key;
+    if (stepKey) wizardData[stepKey] = selected.dataset.value;
+  }
+}
+
+function updateLyricsPlaceholder() {
+  if (!lyricsContent) return;
+  const t = getUiText();
+  const placeholder = lyricsContent.querySelector(".placeholder");
+  if (placeholder) {
+    placeholder.textContent = t.lyricsPlaceholder;
+  }
+  const trialPlaceholder = lyricsContent.querySelector(".lyrics-placeholder p");
+  if (trialPlaceholder) {
+    trialPlaceholder.textContent = t.lyricsPlaceholder;
+  }
+}
+
+function getLyricsPlaceholderHtml() {
+  const t = getUiText();
+  return `<div class="lyrics-placeholder">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l12-2v13"/>
+      <circle cx="6" cy="18" r="3"/>
+      <circle cx="18" cy="16" r="3"/>
+    </svg>
+    <p>${t.lyricsPlaceholder}</p>
+  </div>`;
+}
+
+function updateNavLabels(step) {
+  const t = getUiText();
+  setButtonLabel(backBtn, t.nav.back, "before");
+  const nextLabel = step === WIZARD_STEPS.length - 1 ? t.nav.generateLyrics : t.nav.next;
+  setButtonLabel(nextBtn, nextLabel, "after");
+  if (stepIndicator) {
+    stepIndicator.textContent = t.nav.stepIndicator(step + 1, WIZARD_STEPS.length);
+  }
+}
+
+function applyLanguageUI(value) {
+  const lang = resolveLanguage(value);
+  const t = UI_TEXT[lang] || UI_TEXT.de;
+
+  document.documentElement.lang = lang;
+
+  const wizardPanel = document.querySelector(".wizard-panel");
+  const infoPanel = document.querySelector(".info-panel");
+  if (lang === "ar") {
+    if (wizardPanel) wizardPanel.setAttribute("dir", "rtl");
+    if (infoPanel) infoPanel.setAttribute("dir", "rtl");
+  } else {
+    if (wizardPanel) wizardPanel.removeAttribute("dir");
+    if (infoPanel) infoPanel.removeAttribute("dir");
+  }
+
+  const wizardTitle = document.querySelector(".wizard-header h2");
+  if (wizardTitle) wizardTitle.textContent = t.wizardTitle;
+  const resetBtn = document.getElementById("reset-wizard-btn");
+  if (resetBtn) {
+    setButtonLabel(resetBtn, t.resetLabel, "before");
+    resetBtn.title = t.resetLabel;
+  }
+
+  const stepLabels = [
+    t.steps.language,
+    t.steps.occasion,
+    t.steps.recipient,
+    t.steps.name,
+    t.steps.details,
+    t.steps.style,
+  ];
+  progressSteps.forEach((el, idx) => {
+    const labelEl = el.querySelector(".step-label");
+    if (labelEl && stepLabels[idx]) labelEl.textContent = stepLabels[idx];
+  });
+
+  const stepTitles = [
+    t.titles.language,
+    t.titles.occasion,
+    t.titles.recipient,
+    t.titles.name,
+    t.titles.details,
+    t.titles.style,
+  ];
+  const stepDescs = [
+    t.descriptions.language,
+    t.descriptions.occasion,
+    t.descriptions.recipient,
+    t.descriptions.name,
+    t.descriptions.details,
+    t.descriptions.style,
+  ];
+  wizardStepsEl.forEach((el, idx) => {
+    const titleEl = el.querySelector("h3");
+    const descEl = el.querySelector(".step-desc");
+    if (titleEl && stepTitles[idx]) titleEl.textContent = stepTitles[idx];
+    if (descEl && stepDescs[idx]) descEl.textContent = stepDescs[idx];
+  });
+
+  updateOptionCards(1, OPTION_SETS.occasion[lang], true);
+  updateOptionCards(2, OPTION_SETS.recipient[lang]);
+  updateOptionCards(5, OPTION_SETS.style[lang]);
+
+  const occasionInput = document.querySelector('.wizard-step[data-step="1"] .custom-input');
+  if (occasionInput) occasionInput.placeholder = t.placeholders.occasion;
+  const recipientInput = document.querySelector('.wizard-step[data-step="2"] .custom-input');
+  if (recipientInput) recipientInput.placeholder = t.placeholders.recipient;
+  const styleInput = document.querySelector('.wizard-step[data-step="5"] .custom-input');
+  if (styleInput) styleInput.placeholder = t.placeholders.style;
+
+  const nameInput = document.getElementById("name-input");
+  if (nameInput) nameInput.placeholder = t.placeholders.name;
+  const detailsInput = document.getElementById("details-input");
+  if (detailsInput) detailsInput.placeholder = t.placeholders.details;
+
+  const exampleLabel = document.querySelector(".details-examples .example-label");
+  if (exampleLabel) exampleLabel.textContent = t.detailsExampleLabel;
+
+  if (lyricsGenerating) {
+    const span = lyricsGenerating.querySelector("span");
+    if (span) span.textContent = t.lyricsGenerating;
+  }
+
+  const lyricsHeader = document.querySelector(".lyrics-card .lyrics-header h3");
+  if (lyricsHeader) lyricsHeader.textContent = t.lyricsHeader;
+
+  if (lyricsAiInput) lyricsAiInput.placeholder = t.placeholders.lyricsAi;
+
+  const generateHasIcon = generateBtn && generateBtn.querySelector("svg");
+  setButtonLabel(generateBtn, t.generateSong, generateHasIcon ? "before" : "after");
+
+  if (progressText) progressText.textContent = t.songGenerating;
+
+  if (songSuccessBox) {
+    const titleEl = songSuccessBox.querySelector("h4");
+    const subEl = songSuccessBox.querySelector("p");
+    if (titleEl) titleEl.textContent = t.successTitle;
+    if (subEl) subEl.textContent = t.successSubtitle;
+  }
+
+  const trialCta = document.getElementById("trial-cta");
+  if (trialCta) {
+    const ctaTitle = trialCta.querySelector("h3");
+    const ctaText = trialCta.querySelector("p");
+    const ctaBtn = trialCta.querySelector(".cta-btn");
+    if (ctaTitle) ctaTitle.textContent = t.trialCtaTitle;
+    if (ctaText) ctaText.textContent = t.trialCtaSubtitle;
+    if (ctaBtn) ctaBtn.textContent = t.trialCtaButton;
+  }
+
+  updateLyricsPlaceholder();
+  updateNavLabels(currentStep);
+  updateStepSelections();
+  updateNextButton();
+
+  const stepKey = WIZARD_STEPS[currentStep]?.key;
+  if (stepKey === "details" && !wizardData.details) {
+    startExamplesRotation();
+  } else {
+    stopExamplesRotation();
+  }
+
+}
 
 // DOM
 const initialLoader = document.getElementById("initial-loader");
@@ -74,6 +588,8 @@ const nextBtn = document.getElementById("wizard-next-btn");
 const stepIndicator = document.getElementById("wizard-step-indicator");
 const lyricsGenerating = document.getElementById("lyrics-generating");
 
+applyLanguageUI(wizardData.language);
+
 // Utility
 function escapeHtml(str) {
   const d = document.createElement("div");
@@ -108,7 +624,7 @@ function updateGenerationProgress() {
   if (progressFill) progressFill.style.width = `${percent}%`;
   if (progressPercent) progressPercent.textContent = `${percent}%`;
   if (progressText) {
-    progressText.textContent = `Song wird generiert... | ${formatDuration(elapsedSec)} / ~${formatDuration(GENERATION_ESTIMATE_SEC)}`;
+    progressText.textContent = `${getUiText().songGenerating} | ${formatDuration(elapsedSec)} / ~${formatDuration(GENERATION_ESTIMATE_SEC)}`;
   }
 }
 
@@ -135,18 +651,18 @@ function startExamplesRotation() {
   if (!exampleText || !detailsExamples) return;
   
   detailsExamples.style.display = "flex";
-  currentExampleIndex = Math.floor(Math.random() * DETAILS_EXAMPLES.length);
-  exampleText.textContent = DETAILS_EXAMPLES[currentExampleIndex];
+  currentExampleIndex = Math.floor(Math.random() * getDetailsExamples().length);
+  exampleText.textContent = examples[currentExampleIndex];
   
   if (exampleInterval) clearInterval(exampleInterval);
   
   exampleInterval = setInterval(() => {
-    currentExampleIndex = (currentExampleIndex + 1) % DETAILS_EXAMPLES.length;
+    currentExampleIndex = (currentExampleIndex + 1) % examples.length;
     exampleText.style.opacity = "0";
     exampleText.style.transform = "translateX(10px)";
     
     setTimeout(() => {
-      exampleText.textContent = DETAILS_EXAMPLES[currentExampleIndex];
+      exampleText.textContent = examples[currentExampleIndex];
       exampleText.style.opacity = "1";
       exampleText.style.transform = "translateX(0)";
     }, 200);
@@ -223,13 +739,8 @@ function goToStep(step) {
 
   backBtn.style.visibility = step === 0 ? "hidden" : "visible";
 
-  if (step === WIZARD_STEPS.length - 1) {
-    nextBtn.innerHTML = `Lyrics erstellen <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
-  } else {
-    nextBtn.innerHTML = `Weiter <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
-  }
-
-  stepIndicator.textContent = `Schritt ${step + 1} von ${WIZARD_STEPS.length}`;
+  // Navigation labels
+  updateNavLabels(step);
   updateNextButton();
 
     // Handle rotating examples for details step
@@ -248,14 +759,7 @@ function goToStep(step) {
     pendingStyle = null;
     generateBtn.disabled = true;
     lyricsContent.classList.remove("has-lyrics");
-    lyricsContent.innerHTML = `<div class="lyrics-placeholder">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18V5l12-2v13"/>
-        <circle cx="6" cy="18" r="3"/>
-        <circle cx="18" cy="16" r="3"/>
-      </svg>
-      <p>Deine Lyrics erscheinen hier, sobald die KI sie erstellt hat.</p>
-    </div>`;
+    lyricsContent.innerHTML = getLyricsPlaceholderHtml();
     if (lyricsActions) lyricsActions.style.display = "none";
     if (lyricsAiBox) lyricsAiBox.style.display = "none";
     if (lyricsAiStatus) {
@@ -471,6 +975,10 @@ document.querySelectorAll(".option-cards").forEach(container => {
     wizardData[stepKey] = card.dataset.value;
     updateStepSelections();
 
+    if (stepKey === "language") {
+      applyLanguageUI(wizardData.language);
+    }
+
     // If occasion selected, suggest a recipient
     if (stepKey === "occasion" && card.dataset.suggestRecipient) {
       suggestRecipient(card.dataset.value, card.dataset.suggestRecipient);
@@ -497,6 +1005,10 @@ document.querySelectorAll(".custom-input").forEach(input => {
     wizardData[stepKey] = input.value.trim();
     updateNextButton();
     updateStepSelections();
+
+    if (stepKey === "language") {
+      applyLanguageUI(wizardData.language);
+    }
   });
 
   input.addEventListener("keydown", (e) => {

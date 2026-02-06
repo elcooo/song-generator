@@ -605,6 +605,21 @@
   -webkit-backdrop-filter: var(--glass-blur);
 }
 
+.wizard-panel[dir="rtl"],
+.info-panel[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.wizard-panel[dir="rtl"] .wizard-nav {
+  flex-direction: row-reverse;
+}
+
+.wizard-panel[dir="rtl"] .option-card,
+.wizard-panel[dir="rtl"] .step-selection {
+  text-align: right;
+}
+
 .wizard-step-indicator {
   font-size: 0.85rem;
   color: var(--text-muted);
