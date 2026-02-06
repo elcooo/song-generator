@@ -16,6 +16,11 @@ let wizardData = { occasion: "", recipient: "", name: "", details: "", style: ""
 let currentStep = 0;
 let exampleInterval = null;
 let currentExampleIndex = 0;
+const GENERATION_ESTIMATE_SEC = 120;
+let generationTimer = null;
+let generationStartedAt = null;
+let lastProgressMessage = "Song wird generiert...";
+let lastProgressPercent = 0;
 
 // ===== Details Examples (rotating) =====
 const DETAILS_EXAMPLES = [
@@ -102,6 +107,42 @@ function escapeHtml(str) {
   const d = document.createElement("div");
   d.textContent = str;
   return d.innerHTML;
+}
+
+function formatDuration(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function updateGenerationProgress() {
+  if (!generationStartedAt) return;
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000));
+  const percentFallback = Math.min(99, Math.round((elapsedSec / GENERATION_ESTIMATE_SEC) * 100));
+  const percent = lastProgressPercent || percentFallback;
+  if (progressFill) progressFill.style.width = `${percent}%`;
+  if (progressPercent) progressPercent.textContent = `${percent}%`;
+  if (progressText) {
+    const message = lastProgressMessage || "Song wird generiert...";
+    progressText.textContent = `${message} | ${formatDuration(elapsedSec)} / ~${formatDuration(GENERATION_ESTIMATE_SEC)}`;
+  }
+}
+
+function startGenerationTimer() {
+  generationStartedAt = Date.now();
+  updateGenerationProgress();
+  if (generationTimer) clearInterval(generationTimer);
+  generationTimer = setInterval(updateGenerationProgress, 1000);
+}
+
+function stopGenerationTimer() {
+  if (generationTimer) {
+    clearInterval(generationTimer);
+  }
+  generationTimer = null;
+  generationStartedAt = null;
+  lastProgressMessage = "Song wird generiert...";
+  lastProgressPercent = 0;
 }
 
 // ===== Rotating Examples for Details =====
@@ -946,9 +987,11 @@ generateBtn.addEventListener("click", async () => {
 
   generateBtn.disabled = true;
   progressBar.style.display = "flex";
-  if (progressFill) progressFill.style.width = "5%";
-  if (progressText) progressText.textContent = "Song wird generiert...";
-  if (progressPercent) progressPercent.textContent = "";
+  lastProgressMessage = "Song wird generiert...";
+  lastProgressPercent = 0;
+  if (progressFill) progressFill.style.width = "0%";
+  if (progressPercent) progressPercent.textContent = "0%";
+  startGenerationTimer();
   audioPlayer.style.display = "none";
 
   try {
@@ -963,6 +1006,7 @@ generateBtn.addEventListener("click", async () => {
     if (!res.ok) {
       progressBar.style.display = "none";
       generateBtn.disabled = false;
+      stopGenerationTimer();
       showWizardError(data.error || "Generierung fehlgeschlagen");
       return;
     }
@@ -973,6 +1017,7 @@ generateBtn.addEventListener("click", async () => {
   } catch {
     progressBar.style.display = "none";
     generateBtn.disabled = false;
+    stopGenerationTimer();
     showWizardError("Verbindungsfehler bei der Generierung.");
   }
 });
@@ -986,6 +1031,7 @@ function setupSSE() {
 
     if (data.status === "completed" && data.filePath) {
       progressBar.style.display = "none";
+      stopGenerationTimer();
       audioPlayer.src = "/" + data.filePath;
       
       // Show custom player with success animation
@@ -1003,15 +1049,17 @@ function setupSSE() {
     if (data.status === "failed") {
       progressBar.style.display = "none";
       generateBtn.disabled = false;
+      stopGenerationTimer();
       showWizardError("Song-Generierung fehlgeschlagen: " + (data.error || "Unbekannter Fehler"));
     }
   });
 
   es.addEventListener("song_progress", (e) => {
     const data = JSON.parse(e.data);
-    if (progressFill) progressFill.style.width = (data.percent || 0) + "%";
-    if (progressText) progressText.textContent = data.message || "Song wird generiert...";
-    if (progressPercent) progressPercent.textContent = (data.percent || 0) + "%";
+    if (!generationStartedAt) startGenerationTimer();
+    lastProgressPercent = data.percent || 0;
+    lastProgressMessage = data.message || "Song wird generiert...";
+    updateGenerationProgress();
   });
 
   es.addEventListener("credits_update", (e) => {

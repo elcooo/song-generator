@@ -11,4 +11,4 @@ sessions.db
 .cursor/
 src/logs/*.log
 nul
-test.html
+test.html.env2

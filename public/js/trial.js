@@ -6,6 +6,9 @@ let pendingStyle = null;
 let hasGeneratedSong = false;
 let exampleInterval = null;
 let currentExampleIndex = 0;
+const GENERATION_ESTIMATE_SEC = 120;
+let generationTimer = null;
+let generationStartedAt = null;
 
 // Wizard state
 const WIZARD_STEPS = [
@@ -40,6 +43,9 @@ const initialLoader = document.getElementById("initial-loader");
 const lyricsContent = document.getElementById("trial-lyrics-content");
 const generateBtn = document.getElementById("trial-generate-btn");
 const progressBar = document.getElementById("trial-progress");
+const progressFill = document.getElementById("trial-progress-fill");
+const progressText = document.getElementById("trial-progress-text");
+const progressPercent = document.getElementById("trial-progress-percent");
 const audioPlayer = document.getElementById("trial-audio-player");
 const trialCta = document.getElementById("trial-cta");
 const songSuccessBox = document.getElementById("song-success-box");
@@ -86,6 +92,38 @@ function showError(msg) {
   el.textContent = msg;
   el.style.display = "block";
   setTimeout(() => { el.style.display = "none"; }, 6000);
+}
+
+function formatDuration(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function updateGenerationProgress() {
+  if (!generationStartedAt) return;
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000));
+  const percent = Math.min(99, Math.round((elapsedSec / GENERATION_ESTIMATE_SEC) * 100));
+  if (progressFill) progressFill.style.width = `${percent}%`;
+  if (progressPercent) progressPercent.textContent = `${percent}%`;
+  if (progressText) {
+    progressText.textContent = `Song wird generiert... | ${formatDuration(elapsedSec)} / ~${formatDuration(GENERATION_ESTIMATE_SEC)}`;
+  }
+}
+
+function startGenerationTimer() {
+  generationStartedAt = Date.now();
+  updateGenerationProgress();
+  if (generationTimer) clearInterval(generationTimer);
+  generationTimer = setInterval(updateGenerationProgress, 1000);
+}
+
+function stopGenerationTimer() {
+  if (generationTimer) {
+    clearInterval(generationTimer);
+  }
+  generationTimer = null;
+  generationStartedAt = null;
 }
 
 // ===== Rotating Examples for Details =====
@@ -516,6 +554,9 @@ generateBtn.addEventListener("click", async () => {
 
   generateBtn.disabled = true;
   progressBar.style.display = "flex";
+  if (progressFill) progressFill.style.width = "0%";
+  if (progressPercent) progressPercent.textContent = "0%";
+  startGenerationTimer();
   audioPlayer.style.display = "none";
 
   try {
@@ -530,6 +571,7 @@ generateBtn.addEventListener("click", async () => {
     if (!res.ok) {
       progressBar.style.display = "none";
       generateBtn.disabled = false;
+      stopGenerationTimer();
       showError(data.error || "Song-Generierung fehlgeschlagen.");
       return;
     }
@@ -539,6 +581,7 @@ generateBtn.addEventListener("click", async () => {
   } catch {
     progressBar.style.display = "none";
     generateBtn.disabled = false;
+    stopGenerationTimer();
     showError("Verbindungsfehler bei der Generierung.");
   }
 });
@@ -554,6 +597,7 @@ async function pollSongStatus(songId) {
     if (attempts > maxAttempts) {
       clearInterval(interval);
       progressBar.style.display = "none";
+      stopGenerationTimer();
       showError("Die Song-Generierung dauert länger als erwartet. Bitte lade die Seite neu.");
       return;
     }
@@ -565,6 +609,7 @@ async function pollSongStatus(songId) {
       if (song.status === "completed" && song.file_path) {
         clearInterval(interval);
         progressBar.style.display = "none";
+        stopGenerationTimer();
         
         // Show success box with custom player
         audioPlayer.src = "/" + song.file_path;
@@ -576,6 +621,7 @@ async function pollSongStatus(songId) {
       } else if (song.status === "failed") {
         clearInterval(interval);
         progressBar.style.display = "none";
+        stopGenerationTimer();
         generateBtn.disabled = false;
         hasGeneratedSong = false;
         showError("Song-Generierung fehlgeschlagen: " + (song.error_message || "Unbekannter Fehler"));

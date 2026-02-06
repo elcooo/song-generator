@@ -207,8 +207,13 @@
           Song generieren
         </button>
         <div class="progress-bar" id="trial-progress">
-          <div class="spinner"></div>
-          <span>Song wird generiert... (ca. 1-2 Min.)</span>
+          <div class="progress-track">
+            <div class="progress-fill" id="trial-progress-fill"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-text" id="trial-progress-text">Song wird generiert...</span>
+            <span class="progress-percent" id="trial-progress-percent">0%</span>
+          </div>
         </div>
         
         <!-- Song Fertig Success Box -->
