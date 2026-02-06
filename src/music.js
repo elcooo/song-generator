@@ -17,6 +17,11 @@ const BASE_URLS = (process.env.MINIMAX_BASE_URLS || process.env.MINIMAX_BASE_URL
 const OUTPUT_FORMAT = (process.env.MINIMAX_OUTPUT_FORMAT || "auto").toLowerCase();
 const MODEL = process.env.MINIMAX_MODEL || "music-2.5";
 const PROBE_TIMEOUT_MS = Number(process.env.MINIMAX_PROBE_TIMEOUT_MS) || 12000;
+const API_KEY = (process.env.MINIMAX_API_KEY || "").trim();
+
+// Debug: show masked key on startup so we can verify which key is loaded
+const masked = API_KEY.length > 12 ? `${API_KEY.slice(0, 8)}...${API_KEY.slice(-4)} (${API_KEY.length} chars)` : "(too short or empty)";
+console.log(`[minimax] API key loaded: ${masked}`);
 
 async function fetchWithTimeout(url, options, timeoutMs) {
   const controller = new AbortController();
@@ -101,7 +106,7 @@ async function requestMusic(baseUrl, style, lyrics, songId, options = {}) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.MINIMAX_API_KEY}`,
+          Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify(payload),
       },
