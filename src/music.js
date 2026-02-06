@@ -91,6 +91,7 @@ async function requestMusic(baseUrl, style, lyrics, songId, options = {}) {
     style: preview(style, 60),
     lyrics: preview(lyrics, 80),
   });
+  console.log(`[minimax] FULL PAYLOAD (songId=${songId}):\n${JSON.stringify(payload, null, 2)}`);
 
   let response;
   try {
@@ -117,8 +118,11 @@ async function requestMusic(baseUrl, style, lyrics, songId, options = {}) {
     songId,
     url,
     status: response.status,
-    body: text.slice(0, 500),
+    headers: Object.fromEntries(response.headers.entries()),
+    bodyLength: text.length,
+    body: text.slice(0, 2000),
   });
+  console.log(`[minimax] FULL RESPONSE (songId=${songId}):\n${text.slice(0, 5000)}`);
 
   if (!response.ok) {
     logEvent("error", { songId, url, error: `Musikdienst-Fehler (${response.status})` });
