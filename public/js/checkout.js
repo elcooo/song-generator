@@ -40,7 +40,7 @@ async function loadConfig() {
   const data = await res.json();
 
   if (!data.enabled) {
-    priceAmountEl.textContent = "Stripe ist aktuell nicht verf??gbar.";
+    priceAmountEl.textContent = "Stripe ist aktuell nicht verfuegbar.";
     if (checkoutBtn) checkoutBtn.disabled = true;
     return;
   }
@@ -92,7 +92,7 @@ async function startCheckout() {
 (async function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("success")) {
-    showNotice("Zahlung erfolgreich! Credits werden in K??rze gutgeschrieben.", "success");
+    showNotice("Zahlung erfolgreich! Credits werden in Kuerze gutgeschrieben.", "success");
   }
   if (params.get("canceled")) {
     showNotice("Zahlung abgebrochen. Du kannst es jederzeit erneut versuchen.", "error");
