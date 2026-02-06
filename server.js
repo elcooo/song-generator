@@ -6,7 +6,7 @@ import compression from "compression";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
-import { mkdirSync, existsSync, statSync } from "fs";
+import { mkdirSync, existsSync, statSync, openSync, closeSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,6 +56,13 @@ mkdirSync(audioDir, { recursive: true });
 
 const dbPath = process.env.DB_PATH ? resolve(process.env.DB_PATH) : join(dataDir, "app.db");
 const sessionPath = resolve(dataDir, sessionDb);
+if (!existsSync(sessionPath)) {
+  try {
+    closeSync(openSync(sessionPath, "a"));
+  } catch (err) {
+    console.error("[storage] sessionDb create failed:", err?.message || err);
+  }
+}
 const statOrNull = (p) => {
   try {
     return statSync(p);
