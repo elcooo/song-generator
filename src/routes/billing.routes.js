@@ -16,8 +16,13 @@ const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: "2024-06-20" }) : null;
 
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
-const CREDITS_PER_PURCHASE = Number.parseInt(process.env.STRIPE_CREDITS_PER_PURCHASE || "3", 10);
-const PRICE_LABEL = process.env.STRIPE_PRICE_LABEL || `${CREDITS_PER_PURCHASE} Song-Credits`;
+const DEFAULT_CREDITS = 5;
+const CREDITS_PER_PURCHASE = Number.parseInt(
+  process.env.STRIPE_CREDITS_PER_PURCHASE || String(DEFAULT_CREDITS),
+  10
+);
+const ENV_PRICE_LABEL = process.env.STRIPE_PRICE_LABEL?.trim();
+const PRICE_LABEL = ENV_PRICE_LABEL || `${CREDITS_PER_PURCHASE} Song-Credits`;
 const CURRENCY = process.env.STRIPE_CURRENCY || "eur";
 const UNIT_AMOUNT = Number.parseInt(process.env.STRIPE_UNIT_AMOUNT || "0", 10);
 
@@ -47,9 +52,10 @@ router.get("/api/stripe/config", async (req, res) => {
     const unitAmount = price?.unit_amount ?? UNIT_AMOUNT;
     const productName = typeof price?.product === "string" ? null : price?.product?.name;
 
+    const resolvedLabel = ENV_PRICE_LABEL || productName || PRICE_LABEL;
     return res.json({
       enabled,
-      priceLabel: productName || PRICE_LABEL,
+      priceLabel: resolvedLabel,
       credits,
       currency,
       unitAmount: Number.isFinite(unitAmount) ? unitAmount : 0,

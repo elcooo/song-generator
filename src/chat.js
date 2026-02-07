@@ -104,7 +104,7 @@ Schreibe jetzt die Lyrics:`;
  */
 export async function editLyrics(currentLyrics, prompt, style) {
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-5-mini",
     messages: [
       { role: "developer", content: WIZARD_SYSTEM_PROMPT },
       { role: "user", content: `Hier sind die aktuellen Lyrics:\n\n${currentLyrics}` },
