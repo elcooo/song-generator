@@ -102,6 +102,27 @@
   color: var(--text-secondary);
 }
 
+.credits-buy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  background: var(--accent-gradient);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.credits-buy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px var(--accent-glow);
+}
+
 .user-info .logout-btn {
   background: var(--glass-bg-light);
   backdrop-filter: var(--glass-blur);
@@ -2335,6 +2356,11 @@
 @media (max-width: 640px) {
   .header-credits .credits-text {
     display: none;
+  }
+
+  .credits-buy-btn {
+    padding: 8px 14px;
+    font-size: 0.8rem;
   }
 
   .user-info {
