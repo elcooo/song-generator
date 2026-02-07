@@ -20,7 +20,7 @@
         <span>Weitere Song-Credits nach Registrierung!</span>
       </div>
       <h1>Song Generator</h1>
-      <p class="subtitle">Registriere dich und erstelle weitere persoenliche Songs mit KI!</p>
+      <p class="subtitle">Melde dich mit Google an, um weitere persoenliche Songs mit KI zu erstellen.</p>
 
       <div class="notice" id="auth-notice" style="display:none;"></div>
 
@@ -36,14 +36,16 @@
         </button>
       </div>
 
-      <div class="divider" aria-hidden="true"><span>oder</span></div>
+      <p class="auth-note">Derzeit ist nur die Anmeldung mit Google verfuegbar.</p>
 
-      <div class="tab-bar">
+      <div class="divider email-auth" aria-hidden="true"><span>oder</span></div>
+
+      <div class="tab-bar email-auth">
         <button class="active" data-tab="login">Anmelden</button>
         <button data-tab="register">Registrieren</button>
       </div>
 
-      <form id="login-form">
+      <form id="login-form" class="email-auth">
         <div class="form-group">
           <label for="login-email">E-Mail</label>
           <input type="email" id="login-email" required autocomplete="email">
@@ -57,7 +59,7 @@
         <div class="error-msg" id="login-error"></div>
       </form>
 
-      <form id="register-form">
+      <form id="register-form" class="email-auth">
         <div class="form-group">
           <label for="reg-name">Name</label>
           <input type="text" id="reg-name" required autocomplete="name">
@@ -89,7 +91,7 @@
         <div class="error-msg" id="reg-error"></div>
       </form>
 
-      <div class="info-box">
+      <div class="info-box email-auth">
         <p>Nach der Registrierung erhaeltst du <strong>weitere Song-Credits</strong> und kannst deine Songs herunterladen. Weitere Infos auf unserer <a href="/landing.html">Marketing-Seite</a>.</p>
       </div>
     </div>

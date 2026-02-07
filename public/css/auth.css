@@ -79,6 +79,17 @@
   line-height: 1.6;
 }
 
+.auth-note {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 8px 0 18px;
+}
+
+.email-auth {
+  display: none;
+}
+
 .social-login {
   display: flex;
   justify-content: center;

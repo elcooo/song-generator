@@ -8,6 +8,11 @@ const nextParam = urlParams.get("next");
 const nextUrl = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 const errorParam = urlParams.get("error");
 const verifyParam = urlParams.get("verify");
+const emailAuthEnabled = false;
+
+document.querySelectorAll(".email-auth").forEach(el => {
+  el.style.display = emailAuthEnabled ? "" : "none";
+});
 
 function showNotice(message, type = "success") {
   if (!noticeEl) return;
@@ -30,18 +35,23 @@ function showNotice(message, type = "success") {
 
 // Tab switching
 function switchAuthTab(tab) {
+  if (!emailAuthEnabled) return;
   document.querySelectorAll(".tab-bar button").forEach(b => {
     b.classList.toggle("active", b.dataset.tab === tab);
   });
-  document.getElementById("login-form").style.display = tab === "login" ? "block" : "none";
-  document.getElementById("register-form").style.display = tab === "register" ? "block" : "none";
+  const loginForm = document.getElementById("login-form");
+  const registerForm = document.getElementById("register-form");
+  if (loginForm) loginForm.style.display = tab === "login" ? "block" : "none";
+  if (registerForm) registerForm.style.display = tab === "register" ? "block" : "none";
 }
 
-document.querySelectorAll(".tab-bar button").forEach(btn => {
-  btn.addEventListener("click", () => switchAuthTab(btn.dataset.tab));
-});
+if (emailAuthEnabled) {
+  document.querySelectorAll(".tab-bar button").forEach(btn => {
+    btn.addEventListener("click", () => switchAuthTab(btn.dataset.tab));
+  });
+}
 
-if (tabParam === "register") {
+if (emailAuthEnabled && tabParam === "register") {
   switchAuthTab("register");
 }
 
@@ -59,12 +69,12 @@ async function loadAuthProviders() {
     const data = await res.json();
     if (!data.google) {
       if (socialLogin) socialLogin.style.display = "none";
-      if (divider) divider.style.display = "none";
+      if (divider && !emailAuthEnabled) divider.style.display = "none";
       return;
     }
   } catch {
     if (socialLogin) socialLogin.style.display = "none";
-    if (divider) divider.style.display = "none";
+    if (divider && !emailAuthEnabled) divider.style.display = "none";
   }
 }
 
@@ -75,7 +85,7 @@ if (googleBtn) {
   });
 }
 
-if (verifyParam) {
+if (emailAuthEnabled && verifyParam) {
   const verifyMap = {
     success: "Email bestaetigt. Du kannst dich jetzt anmelden.",
     expired: "Bestaetigungslink abgelaufen. Bitte fordere einen neuen an.",
@@ -97,52 +107,60 @@ if (errorParam) {
     google_session: "Sitzung konnte nicht erstellt werden.",
     google_unknown: "Unbekannter Fehler beim Google Login.",
   };
-  showAuthError(errorMap[errorParam] || "Anmeldung fehlgeschlagen.");
+  const message = errorMap[errorParam] || "Anmeldung fehlgeschlagen.";
+  if (emailAuthEnabled) {
+    showAuthError(message);
+  } else {
+    showNotice(message, "error");
+  }
 }
 
 loadAuthProviders();
 
 // Login
-document.getElementById("login-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById("login-error");
-  const btn = e.target.querySelector(".btn");
-  errEl.textContent = "";
-  if (resendLink) resendLink.style.display = "none";
+const loginForm = document.getElementById("login-form");
+if (emailAuthEnabled && loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById("login-error");
+    const btn = e.target.querySelector(".btn");
+    errEl.textContent = "";
+    if (resendLink) resendLink.style.display = "none";
 
-  const email = document.getElementById("login-email").value;
-  const password = document.getElementById("login-password").value;
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
 
-  btn.disabled = true;
-  btn.textContent = "Wird angemeldet...";
+    btn.disabled = true;
+    btn.textContent = "Wird angemeldet...";
 
-  try {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    
-    if (!res.ok) {
-      errEl.textContent = data.error || "Anmeldung fehlgeschlagen";
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        errEl.textContent = data.error || "Anmeldung fehlgeschlagen";
+        btn.disabled = false;
+        btn.textContent = "Anmelden";
+        if (data.code === "unverified" && resendLink) {
+          resendLink.style.display = "block";
+        }
+        return;
+      }
+      
+      window.location.href = nextUrl;
+    } catch {
+      errEl.textContent = "Verbindungsfehler. Bitte versuche es erneut.";
       btn.disabled = false;
       btn.textContent = "Anmelden";
-      if (data.code === "unverified" && resendLink) {
-        resendLink.style.display = "block";
-      }
-      return;
     }
-    
-    window.location.href = nextUrl;
-  } catch {
-    errEl.textContent = "Verbindungsfehler. Bitte versuche es erneut.";
-    btn.disabled = false;
-    btn.textContent = "Anmelden";
-  }
-});
+  });
+}
 
-if (resendLink) {
+if (emailAuthEnabled && resendLink) {
   resendLink.addEventListener("click", async () => {
     const email = document.getElementById("login-email").value;
     if (!email) {
@@ -210,64 +228,67 @@ function updatePasswordStrength(password) {
 }
 
 const passwordInput = document.getElementById("reg-password");
-if (passwordInput) {
+if (emailAuthEnabled && passwordInput) {
   passwordInput.addEventListener("input", () => updatePasswordStrength(passwordInput.value));
   updatePasswordStrength(passwordInput.value);
 }
 
 // Register
-document.getElementById("register-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById("reg-error");
-  const btn = e.target.querySelector(".btn");
-  errEl.textContent = "";
+const registerForm = document.getElementById("register-form");
+if (emailAuthEnabled && registerForm) {
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById("reg-error");
+    const btn = e.target.querySelector(".btn");
+    errEl.textContent = "";
 
-  const displayName = document.getElementById("reg-name").value;
-  const email = document.getElementById("reg-email").value;
-  const password = document.getElementById("reg-password").value;
-  const passwordConfirm = document.getElementById("reg-password-confirm")?.value || "";
-  const termsAccepted = document.getElementById("reg-terms")?.checked;
+    const displayName = document.getElementById("reg-name").value;
+    const email = document.getElementById("reg-email").value;
+    const password = document.getElementById("reg-password").value;
+    const passwordConfirm = document.getElementById("reg-password-confirm")?.value || "";
+    const termsAccepted = document.getElementById("reg-terms")?.checked;
 
-  const passwordError = getPasswordErrorClient(password);
-  if (passwordError) {
-    errEl.textContent = passwordError;
-    return;
-  }
-  if (password !== passwordConfirm) {
-    errEl.textContent = "Passwoerter stimmen nicht ueberein";
-    return;
-  }
-  if (termsAccepted === false) {
-    errEl.textContent = "Bitte akzeptiere die AGB und Datenschutzerklaerung.";
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Wird registriert...";
-
-  try {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, passwordConfirm, displayName }),
-    });
-    const data = await res.json();
-    
-    if (!res.ok) {
-      errEl.textContent = data.error || "Registrierung fehlgeschlagen";
-      btn.disabled = false;
-      btn.textContent = "Jetzt kostenlos registrieren";
+    const passwordError = getPasswordErrorClient(password);
+    if (passwordError) {
+      errEl.textContent = passwordError;
+      return;
+    }
+    if (password !== passwordConfirm) {
+      errEl.textContent = "Passwoerter stimmen nicht ueberein";
+      return;
+    }
+    if (termsAccepted === false) {
+      errEl.textContent = "Bitte akzeptiere die AGB und Datenschutzerklaerung.";
       return;
     }
 
-    showNotice("Registrierung erfolgreich. Bitte bestaetige deine E-Mail.", "success");
-    switchAuthTab("login");
-    const loginEmail = document.getElementById("login-email");
-    if (loginEmail) loginEmail.value = email;
-  } catch {
-    errEl.textContent = "Verbindungsfehler. Bitte versuche es erneut.";
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Jetzt kostenlos registrieren";
-  }
-});
+    btn.disabled = true;
+    btn.textContent = "Wird registriert...";
+
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, passwordConfirm, displayName }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        errEl.textContent = data.error || "Registrierung fehlgeschlagen";
+        btn.disabled = false;
+        btn.textContent = "Jetzt kostenlos registrieren";
+        return;
+      }
+
+      showNotice("Registrierung erfolgreich. Bitte bestaetige deine E-Mail.", "success");
+      switchAuthTab("login");
+      const loginEmail = document.getElementById("login-email");
+      if (loginEmail) loginEmail.value = email;
+    } catch {
+      errEl.textContent = "Verbindungsfehler. Bitte versuche es erneut.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Jetzt kostenlos registrieren";
+    }
+  });
+}
