@@ -342,7 +342,12 @@ router.post("/api/logout", (req, res) => {
 router.get("/api/me", requireAuth, (req, res) => {
   const user = findUserById(req.session.userId);
   if (!user) return res.status(401).json({ error: "Nutzer nicht gefunden" });
-  const resolvedProvider = user.provider || (user.google_id ? "google" : "local");
+  const resolvedProvider =
+    user.provider && user.provider !== "local"
+      ? user.provider
+      : user.google_id
+        ? "google"
+        : "local";
   res.json({
     id: user.id,
     email: user.email,
@@ -408,7 +413,12 @@ router.delete("/api/me", requireAuth, async (req, res) => {
   try {
     const user = findUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Nutzer nicht gefunden" });
-    const resolvedProvider = user.provider || (user.google_id ? "google" : "local");
+    const resolvedProvider =
+      user.provider && user.provider !== "local"
+        ? user.provider
+        : user.google_id
+          ? "google"
+          : "local";
     const isLocalUser = resolvedProvider === "local";
     if (isLocalUser) {
       if (!password) {
